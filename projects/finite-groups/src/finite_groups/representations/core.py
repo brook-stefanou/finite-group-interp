@@ -1,17 +1,45 @@
 import cmath
 
 import numpy as np
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from finite_groups.group import FiniteGroup
 
 
-class Representation:
-    def __init__(self, group: FiniteGroup, matrix_mapping: dict[object, np.ndarray]):
-        # Group: an instance of FiniteGroup
-        # matrix_mapping: a dictionary mapping group elements to matrices (Numpy arrays)
-        self.group = group
-        self.map = matrix_mapping
-        self.degree = list(matrix_mapping.values())[0].shape[0]
+class Representation(BaseModel):
+    # numpy matrices require arbitrary types.
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    group: FiniteGroup
+    # Maps group elements to their representing matrices (numpy arrays).
+    map: dict[object, np.ndarray]
+
+    @property
+    def degree(self) -> int:
+        return next(iter(self.map.values())).shape[0]
+
+    @model_validator(mode="after")
+    def _validate(self) -> "Representation":
+        # 1. Domain completeness: every group element must have a matrix.
+        missing = [g for g in self.group.elements if g not in self.map]
+        if missing:
+            raise ValueError(f"Representation missing matrices for: {missing}")
+
+        # 2. All matrices must be square and of one consistent degree.
+        d = self.degree
+        for g, m in self.map.items():
+            if m.shape != (d, d):
+                raise ValueError(f"Matrix for {g!r} is not {d}x{d}")
+
+        # 3. Homomorphism law: rho(g) @ rho(h) == rho(g * h) for all g, h.
+        for g in self.group.elements:
+            for h in self.group.elements:
+                gh = self.group.multiply(g, h)
+                if not np.allclose(self.map[g] @ self.map[h], self.map[gh]):
+                    raise ValueError(
+                        f"Not a homomorphism: rho({g!r}) @ rho({h!r}) != rho({g!r} * {h!r})"
+                    )
+        return self
 
     def character(self):
         # Returns the character of the representation as a class function
@@ -47,4 +75,4 @@ class Representation:
 
             # Map the group element to its completed permutation matrix
             matrix_mapping[g] = matrix
-        return cls(group, matrix_mapping)
+        return cls(group=group, map=matrix_mapping)

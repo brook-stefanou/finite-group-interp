@@ -1,21 +1,47 @@
 import numpy as np
+from pydantic import BaseModel, ConfigDict, PrivateAttr, field_validator, model_validator
 
 
-class FiniteGroup:
-    def __init__(self, elements: list, cayley_table: np.ndarray):
-        # Assigns data
-        self.elements = elements
-        self.cayley_table = cayley_table
+class FiniteGroup(BaseModel):
+    # Pydantic has no native numpy support, so allow arbitrary types for the table.
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-        # Calculates Order
-        self.order = len(self.elements)
+    elements: list
+    cayley_table: np.ndarray
 
-        # Validation
-        if self.cayley_table.shape != (self.order, self.order):
+    # Cached identity index, populated during validation.
+    _identity_index: int | None = PrivateAttr(default=None)
+
+    @property
+    def order(self) -> int:
+        return len(self.elements)
+
+    # ---- Layer 1: structural validation (field-level) ----
+    @field_validator("cayley_table")
+    @classmethod
+    def _table_is_integer_matrix(cls, v: np.ndarray) -> np.ndarray:
+        if not isinstance(v, np.ndarray):
+            raise ValueError("Cayley table must be a numpy array")
+        if v.ndim != 2:
+            raise ValueError("Cayley table must be 2-dimensional")
+        if not np.issubdtype(v.dtype, np.integer):
+            raise ValueError("Cayley table must contain integer indices")
+        return v
+
+    # ---- Layer 1 + 2: cross-field structure, then mathematical axioms ----
+    @model_validator(mode="after")
+    def _validate(self) -> "FiniteGroup":
+        n = self.order
+
+        if self.cayley_table.shape != (n, n):
             raise ValueError("Cayley table dimensions do not match number of elements")
 
-        # Defined placeholder identity index
-        self._identity_index: int | None = None
+        if n > 0 and (self.cayley_table.min() < 0 or self.cayley_table.max() >= n):
+            raise ValueError("Cayley table entries must be valid indices in [0, n)")
+
+        # Mathematical group axioms (identity, inverses, associativity).
+        self._validate_group_axioms()
+        return self
 
     def __eq__(self, other):
         if not isinstance(other, FiniteGroup):

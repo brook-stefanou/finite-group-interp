@@ -12,7 +12,7 @@ class GroupGenerators:
         range_arr = np.arange(n)
         table = (range_arr + range_arr[:, None]) % n
 
-        return FiniteGroup(elements, table)
+        return FiniteGroup(elements=elements, cayley_table=table)
 
     @classmethod
     def symmetric_group(cls, n: int):
@@ -46,7 +46,7 @@ class GroupGenerators:
                 table[i, j] = perm_to_idx[res]
 
         str_elements = ["".join(map(str, p)) for p in elements_tuples]
-        return FiniteGroup(str_elements, table)
+        return FiniteGroup(elements=str_elements, cayley_table=table)
 
     @classmethod
     def direct_product(cls, group_a, group_b):
@@ -76,7 +76,7 @@ class GroupGenerators:
                 # Resulting index uses the same mapping logic
                 table[i, j] = res_a * n_b + res_b
 
-        return FiniteGroup(new_elements, table)
+        return FiniteGroup(elements=new_elements, cayley_table=table)
 
     @classmethod
     def dihedral_group(cls, n: int):
@@ -115,4 +115,4 @@ class GroupGenerators:
             suffix = f"r{r}" if r > 0 else ("e" if s == 0 else "")
             names.append(prefix + suffix)
 
-        return FiniteGroup(names, table)
+        return FiniteGroup(elements=names, cayley_table=table)
