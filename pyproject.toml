@@ -24,7 +24,9 @@ url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
 [tool.uv.sources]
-torch = { index = "pytorch-cpu" }
+torch = [
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux'" }
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["projects/finite-groups/src", "."]
