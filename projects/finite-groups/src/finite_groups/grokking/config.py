@@ -29,6 +29,9 @@ class ModelConfig(BaseModel):
     # The config names the activation; the model maps it to an nn module. ReLU is
     # piecewise-linear and the easiest to reverse-engineer, so it's the default.
     activation: Literal["relu", "gelu", "silu"] = "relu"
+    # Initial weight std. Worth a config knob (not just a hardcoded default)
+    # because init scale interacts with weight decay to shape the grokking onset.
+    init_std: float = Field(0.02, gt=0.0)
 
 
 class OptimConfig(BaseModel):

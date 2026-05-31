@@ -65,3 +65,10 @@ def test_activation_default_and_validation():
     assert cfg.model.activation == "relu"
     with pytest.raises(ValidationError):
         ModelConfig(activation="tanh")  # not in the allowed set
+
+
+def test_init_std_is_positive():
+    cfg = GrokkingConfig(experiment=_experiment())
+    assert cfg.model.init_std > 0
+    with pytest.raises(ValidationError):
+        ModelConfig(init_std=0.0)
