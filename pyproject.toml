@@ -1,0 +1,32 @@
+[project]
+name = "ai-safety-portfolio"
+version = "0.1.0"
+description = "AI Safety & Representation Geometry Portfolio"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24.0",
+    "torch>=2.0.0",
+    "pydantic>=2.0.0",
+    "omegaconf>=2.3.0",
+    "wandb>=0.15.0",
+    "sympy>=1.12",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[tool.pytest.ini_options]
+pythonpath = ["projects/finite-groups/src", "."]
+addopts = "-v --tb=short"
+testpaths = ["projects/finite-groups/tests"]
