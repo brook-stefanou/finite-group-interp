@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from finite_groups.generators import GroupGenerators
 
@@ -72,3 +73,60 @@ def test_symmetric_group_large():
     g = GroupGenerators.symmetric_group(4)
     assert g.order == 24
     assert g._validate_group_axioms() is True
+
+
+def test_semidirect_dihedral_is_nonabelian_order_six():
+    # C_3 semidirect C_2 with the inversion action is D_3 (= S_3), the unique
+    # non-abelian group of order 6.
+    c3 = GroupGenerators.cyclic_group(3)
+    c2 = GroupGenerators.cyclic_group(2)
+    identity = c2.elements[0]
+
+    def invert(h, n):
+        return n if h == identity else c3.get_inverse(n)
+
+    g = GroupGenerators.semidirect_product(c3, c2, invert)
+
+    assert g.order == 6
+    is_abelian = np.array_equal(g.cayley_table, g.cayley_table.T)
+    assert not is_abelian
+    assert g._validate_group_axioms() is True
+
+
+def test_semidirect_trivial_action_is_direct_product():
+    # A trivial action collapses to the direct product: C_2 x C_3 = C_6, abelian.
+    c3 = GroupGenerators.cyclic_group(3)
+    c2 = GroupGenerators.cyclic_group(2)
+
+    g = GroupGenerators.semidirect_product(c3, c2, lambda h, n: n)
+
+    assert g.order == 6
+    assert np.array_equal(g.cayley_table, g.cayley_table.T)  # abelian
+    assert g._validate_group_axioms() is True
+
+
+def test_semidirect_builds_d4():
+    # C_4 semidirect C_2 (inversion) is the dihedral group of the square, order 8.
+    c4 = GroupGenerators.cyclic_group(4)
+    c2 = GroupGenerators.cyclic_group(2)
+    identity = c2.elements[0]
+
+    def invert(h, n):
+        return n if h == identity else c4.get_inverse(n)
+
+    g = GroupGenerators.semidirect_product(c4, c2, invert)
+
+    assert g.order == 8
+    assert not np.array_equal(g.cayley_table, g.cayley_table.T)
+    assert g._validate_group_axioms() is True
+
+
+def test_semidirect_rejects_non_automorphism_action():
+    # An action whose maps are not automorphisms of the normal subgroup is invalid;
+    # a constant map is not even a bijection.
+    c3 = GroupGenerators.cyclic_group(3)
+    c2 = GroupGenerators.cyclic_group(2)
+    constant = c3.elements[0]
+
+    with pytest.raises(ValueError):
+        GroupGenerators.semidirect_product(c3, c2, lambda h, n: constant)

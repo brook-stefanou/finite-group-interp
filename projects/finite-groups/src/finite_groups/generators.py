@@ -116,3 +116,60 @@ class GroupGenerators:
             names.append(prefix + suffix)
 
         return FiniteGroup(elements=names, cayley_table=table)
+
+    @classmethod
+    def semidirect_product(cls, normal, acting, action):
+        """Builds the semidirect product N (x) H of `normal` by `acting`.
+
+        `action(h, n)` is the automorphism phi_h applied to n: it takes an
+        element h of `acting` and an element n of `normal`, and returns the
+        image phi_h(n) as an element of `normal`. A trivial action (phi_h = id)
+        recovers the direct product.
+
+        Multiplication: (n1, h1) * (n2, h2) = (n1 * phi_h1(n2), h1 * h2).
+        """
+        n_N, n_H = normal.order, acting.order
+        normal_idx = {el: i for i, el in enumerate(normal.elements)}
+
+        # Resolve and validate the action as an index table phi[h_idx, n_idx].
+        phi = np.zeros((n_H, n_N), dtype=np.int64)
+        for hi, h in enumerate(acting.elements):
+            for ni, n in enumerate(normal.elements):
+                image = action(h, n)
+                if image not in normal_idx:
+                    raise ValueError(
+                        f"Action of {h!r} sent {n!r} outside the normal subgroup"
+                    )
+                phi[hi, ni] = normal_idx[image]
+
+            # Each phi_h must be a bijection (necessary for an automorphism).
+            if len(set(phi[hi].tolist())) != n_N:
+                raise ValueError(f"Action of {h!r} is not a bijection on the normal subgroup")
+
+            # ...and must preserve the operation: phi_h(a*b) == phi_h(a)*phi_h(b).
+            for a in range(n_N):
+                for b in range(n_N):
+                    ab = normal.cayley_table[a, b]
+                    if phi[hi, ab] != normal.cayley_table[phi[hi, a], phi[hi, b]]:
+                        raise ValueError(
+                            f"Action of {h!r} is not an automorphism of the normal subgroup"
+                        )
+
+        new_order = n_N * n_H
+        new_elements = []
+        for n_name in normal.elements:
+            for h_name in acting.elements:
+                new_elements.append(f"({n_name},{h_name})")
+
+        table = np.zeros((new_order, new_order), dtype=np.int64)
+        for i in range(new_order):
+            ni, hi = divmod(i, n_H)
+            for j in range(new_order):
+                nj, hj = divmod(j, n_H)
+
+                # (n_i, h_i) * (n_j, h_j) = (n_i * phi_{h_i}(n_j), h_i * h_j)
+                res_n = normal.cayley_table[ni, phi[hi, nj]]
+                res_h = acting.cayley_table[hi, hj]
+                table[i, j] = res_n * n_H + res_h
+
+        return FiniteGroup(elements=new_elements, cayley_table=table)
