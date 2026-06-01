@@ -4,7 +4,7 @@ import numpy as np
 from core.trainer import BaseTrainer, set_seed
 from core.models.one_layer_transformer import OneLayerTransformer
 from finite_groups.group import FiniteGroup
-from finite_groups.presentations import build_group
+from finite_groups.catalog import resolve_group
 from finite_groups.grokking.config import GrokkingConfig
 from finite_groups.grokking.data import build_group_task, train_test_split
 from finite_groups.grokking.schedule import should_snapshot
@@ -36,7 +36,7 @@ class GroupGrokkingTrainer(BaseTrainer):
     @classmethod
     def from_config(cls, config: GrokkingConfig) -> "GroupGrokkingTrainer":
         set_seed(config.experiment.seed)  # seed before model init so weights are reproducible
-        group = build_group(config.data.group)
+        group = resolve_group(config.data.group)
         model = OneLayerTransformer(
             d_vocab_in = group.order + 1, # group elements + '='
             d_vocab_out = group.order,

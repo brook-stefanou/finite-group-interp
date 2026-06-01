@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import pytest
 
-from finite_groups.catalog import CATALOG, all_groups, build_from_id
+from finite_groups.catalog import CATALOG, all_groups, build_from_id, resolve_group
 
 # Known number of groups per order (the classification we must reproduce).
 # Extended order-by-order as the catalog is populated.
@@ -91,6 +91,14 @@ def test_all_groups_filters_by_order():
     groups = all_groups(max_order=8)
     assert all(e.gap_id[0] <= 8 for e in groups)
     assert len(groups) == sum(v for k, v in EXPECTED_COUNTS.items() if k <= 8)
+
+
+def test_resolve_group_handles_alias_id_and_family():
+    assert resolve_group("A4").order == 12   # catalog alias (build_group can't do A_n)
+    assert resolve_group("Q8").order == 8    # catalog alias
+    assert resolve_group("16,3").order == 16  # GAP id
+    assert resolve_group("C8").order == 8    # parametric family fallback
+    assert resolve_group("S3").order == 6    # alias and family agree
 
 
 def test_catalog_is_complete_through_order_19():

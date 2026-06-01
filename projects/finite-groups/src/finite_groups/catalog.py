@@ -17,7 +17,7 @@ from dataclasses import dataclass
 
 from finite_groups.generators import GroupGenerators
 from finite_groups.group import FiniteGroup
-from finite_groups.presentations import from_presentation
+from finite_groups.presentations import build_group, from_presentation
 
 
 @dataclass(frozen=True)
@@ -212,3 +212,19 @@ def build_from_id(gap_id) -> FiniteGroup:
     if gap_id not in CATALOG:
         raise KeyError(f"No group with GAP id {gap_id} in the catalog")
     return CATALOG[gap_id].build()
+
+
+def resolve_group(spec: str) -> FiniteGroup:
+    """Resolve a config/CLI group spec into a FiniteGroup.
+
+    Accepts a GAP id (``"16,3"``), a catalog alias (``"A4"``, ``"Q8"``, ``"D8"``),
+    or a family spec for the parametric families (``"C8"``, ``"S5"``, ``"D7"``).
+    Catalog entries take priority; anything else falls back to ``build_group``.
+    """
+    spec = spec.strip()
+    if "," in spec:
+        return build_from_id(spec)
+    for entry in CATALOG.values():
+        if spec in entry.aliases:
+            return entry.build()
+    return build_group(spec)
