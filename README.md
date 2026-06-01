@@ -1,5 +1,7 @@
 # AI Safety & Representation Geometry Portfolio
 
+![CI](https://github.com/stefanoubrook/ai-safety-portfolio/actions/workflows/ci.yml/badge.svg)
+
 A codebase for learning AI safety and machine learning interpretability techniques through self-directed replication and extension of algorithmic research.
 
 The primary objective is to investigate representation geometry, feature mapping, and circuit formation in neural networks by building clean, reproducible experiments.

@@ -137,9 +137,7 @@ class GroupGenerators:
             for ni, n in enumerate(normal.elements):
                 image = action(h, n)
                 if image not in normal_idx:
-                    raise ValueError(
-                        f"Action of {h!r} sent {n!r} outside the normal subgroup"
-                    )
+                    raise ValueError(f"Action of {h!r} sent {n!r} outside the normal subgroup")
                 phi[hi, ni] = normal_idx[image]
 
             # Each phi_h must be a bijection (necessary for an automorphism).

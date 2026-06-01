@@ -9,8 +9,15 @@ CONTRACT = {"W_E", "W_pos", "W_Q", "W_K", "W_V", "W_O", "W_in", "W_out", "W_U"}
 
 def _model(use_mlp: bool = True, d_model: int = 8, n_heads: int = 2) -> OneLayerTransformer:
     return OneLayerTransformer(
-        d_vocab_in=6, d_vocab_out=5, n_ctx=3, d_model=d_model, n_heads=n_heads,
-        use_mlp=use_mlp, d_mlp=16, activation="relu", init_std=0.02,
+        d_vocab_in=6,
+        d_vocab_out=5,
+        n_ctx=3,
+        d_model=d_model,
+        n_heads=n_heads,
+        use_mlp=use_mlp,
+        d_mlp=16,
+        activation="relu",
+        init_std=0.02,
     )
 
 
@@ -56,8 +63,17 @@ def test_state_dict_exposes_the_weight_contract():
 
 
 def test_init_std_controls_weight_scale():
-    big = OneLayerTransformer(d_vocab_in=6, d_vocab_out=5, n_ctx=3, d_model=8, n_heads=2,
-                              use_mlp=True, d_mlp=16, activation="relu", init_std=1.0)
+    big = OneLayerTransformer(
+        d_vocab_in=6,
+        d_vocab_out=5,
+        n_ctx=3,
+        d_model=8,
+        n_heads=2,
+        use_mlp=True,
+        d_mlp=16,
+        activation="relu",
+        init_std=1.0,
+    )
     small = _model()  # init_std=0.02
     assert big.W_E.std() > small.W_E.std()
 
@@ -69,5 +85,14 @@ def test_indivisible_d_model_raises():
 
 def test_unknown_activation_raises():
     with pytest.raises(KeyError):
-        OneLayerTransformer(d_vocab_in=6, d_vocab_out=5, n_ctx=3, d_model=8, n_heads=2,
-                            use_mlp=True, d_mlp=16, activation="tanh", init_std=0.02)
+        OneLayerTransformer(
+            d_vocab_in=6,
+            d_vocab_out=5,
+            n_ctx=3,
+            d_model=8,
+            n_heads=2,
+            use_mlp=True,
+            d_mlp=16,
+            activation="tanh",
+            init_std=0.02,
+        )

@@ -25,9 +25,7 @@ def test_associativity_failure():
     # Modify to break associativity
     table[1, 2] = 1
 
-    with pytest.raises(
-        ValueError, match=r"Associativity fails for triplet: \(a, a, b\)"
-    ):
+    with pytest.raises(ValueError, match=r"Associativity fails for triplet: \(a, a, b\)"):
         FiniteGroup(elements=elements, cayley_table=table)
 
 

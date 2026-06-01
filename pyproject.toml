@@ -17,6 +17,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=7.0.0",
+    "ruff>=0.15.15",
 ]
 
 [[tool.uv.index]]
@@ -28,6 +29,9 @@ explicit = true
 torch = [
     { index = "pytorch-cpu", marker = "sys_platform == 'linux'" }
 ]
+
+[tool.ruff]
+line-length = 100
 
 [tool.pytest.ini_options]
 pythonpath = ["projects/finite-groups/src", "."]

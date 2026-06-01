@@ -50,8 +50,7 @@ def compute_character_table(group) -> tuple[np.ndarray, list]:
 
         # 5. Row Orthogonality: d^2 * sum( |omega_i|^2 / |Ci| ) = n
         sum_sq = sum(
-            (np.conj(omega_arr[i]) * omega_arr[i]).real / len(classes[i])
-            for i in range(k)
+            (np.conj(omega_arr[i]) * omega_arr[i]).real / len(classes[i]) for i in range(k)
         )
         d = np.sqrt(n / sum_sq)
 
@@ -71,9 +70,7 @@ def clean_table(table, decimals=5):
     return np.round(table, decimals)
 
 
-def decompose_character(
-    reducible_phi: np.ndarray, group: FiniteGroup
-) -> tuple[dict, np.ndarray]:
+def decompose_character(reducible_phi: np.ndarray, group: FiniteGroup) -> tuple[dict, np.ndarray]:
     # get necessary data out of the group
     table, classes = compute_character_table(group)
     order = group.order

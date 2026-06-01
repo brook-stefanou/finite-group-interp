@@ -24,11 +24,7 @@ def test_s3_character_table():
     for i in range(len(table)):
         for j in range(len(table)):
             inner_product = (
-                sum(
-                    class_sizes[k] * table[i, k] * np.conj(table[j, k])
-                    for k in range(3)
-                )
-                / order
+                sum(class_sizes[k] * table[i, k] * np.conj(table[j, k]) for k in range(3)) / order
             )
 
             expected = 1.0 if i == j else 0.0

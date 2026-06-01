@@ -19,20 +19,28 @@ def compute_config_hash(config: BaseConfig) -> str:
 
 def get_git_commit() -> str:
     try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"],
-            stderr=subprocess.DEVNULL,
-        ).decode().strip()
+        return (
+            subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
     except (subprocess.CalledProcessError, FileNotFoundError):
         return "unknown"
 
 
 def get_git_dirty() -> bool:
     try:
-        result = subprocess.check_output(
-            ["git", "status", "--porcelain"],
-            stderr=subprocess.DEVNULL,
-        ).decode().strip()
+        result = (
+            subprocess.check_output(
+                ["git", "status", "--porcelain"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
         return len(result) > 0
     except (subprocess.CalledProcessError, FileNotFoundError):
         return True

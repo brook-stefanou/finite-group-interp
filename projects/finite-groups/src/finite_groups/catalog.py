@@ -108,9 +108,7 @@ def _k4_semidirect_c4() -> FiniteGroup:
 def _pauli_group() -> FiniteGroup:
     # SmallGroup(16,13), central product C4 o D4: <a,b,c | a^4, b^4, c^2,
     # c b c^-1 = b^-1, a^2 = b^2, [a,b], [a,c]> with a central of order 4.
-    return from_presentation(
-        "abc", ["aaaa", "bbbb", "cc", "cbCb", "aaBB", "abAB", "acAC"]
-    )
+    return from_presentation("abc", ["aaaa", "bbbb", "cc", "cbCb", "aaBB", "abAB", "acAC"])
 
 
 # --- the catalog -------------------------------------------------------------
@@ -126,66 +124,149 @@ _ENTRIES: list[GroupEntry] = [
     GroupEntry((6, 2), "C6", ("C6",), lambda: _C(6), (1, 2, 3, 3, 6, 6)),
     GroupEntry((7, 1), "C7", ("C7",), lambda: _C(7), (1, 7, 7, 7, 7, 7, 7)),
     GroupEntry((8, 1), "C8", ("C8",), lambda: _C(8), (1, 2, 4, 4, 8, 8, 8, 8)),
-    GroupEntry((8, 2), "C4 x C2", ("C4xC2",), lambda: _PROD(_C(4), _C(2)), (1, 2, 2, 2, 4, 4, 4, 4)),
+    GroupEntry(
+        (8, 2), "C4 x C2", ("C4xC2",), lambda: _PROD(_C(4), _C(2)), (1, 2, 2, 2, 4, 4, 4, 4)
+    ),
     GroupEntry((8, 3), "D4", ("D4",), lambda: _dihedral(4), (1, 2, 2, 2, 2, 2, 4, 4)),
     GroupEntry((8, 4), "Q8", ("Q8",), _quaternion8, (1, 2, 4, 4, 4, 4, 4, 4)),
-    GroupEntry((8, 5), "C2 x C2 x C2", ("C2^3",), lambda: _elementary_abelian_2(3), (1, 2, 2, 2, 2, 2, 2, 2)),
+    GroupEntry(
+        (8, 5),
+        "C2 x C2 x C2",
+        ("C2^3",),
+        lambda: _elementary_abelian_2(3),
+        (1, 2, 2, 2, 2, 2, 2, 2),
+    ),
     GroupEntry((9, 1), "C9", ("C9",), lambda: _C(9), (1, 3, 3, 9, 9, 9, 9, 9, 9)),
-    GroupEntry((9, 2), "C3 x C3", ("C3xC3",), lambda: _PROD(_C(3), _C(3)), (1, 3, 3, 3, 3, 3, 3, 3, 3)),
+    GroupEntry(
+        (9, 2), "C3 x C3", ("C3xC3",), lambda: _PROD(_C(3), _C(3)), (1, 3, 3, 3, 3, 3, 3, 3, 3)
+    ),
     GroupEntry((10, 1), "D5", ("D5",), lambda: _dihedral(5), (1, 2, 2, 2, 2, 2, 5, 5, 5, 5)),
     GroupEntry((10, 2), "C10", ("C10",), lambda: _C(10), (1, 2, 5, 5, 5, 5, 10, 10, 10, 10)),
     GroupEntry((11, 1), "C11", ("C11",), lambda: _C(11), (1,) + (11,) * 10),
-    GroupEntry((12, 1), "Dic3", ("Dic3", "Q12"), lambda: _dicyclic(3), (1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 6, 6)),
+    GroupEntry(
+        (12, 1), "Dic3", ("Dic3", "Q12"), lambda: _dicyclic(3), (1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 6, 6)
+    ),
     GroupEntry((12, 2), "C12", ("C12",), lambda: _C(12), (1, 2, 3, 3, 4, 4, 6, 6, 12, 12, 12, 12)),
     GroupEntry((12, 3), "A4", ("A4",), _alternating4, (1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3)),
     GroupEntry((12, 4), "D6", ("D6",), lambda: _dihedral(6), (1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 6, 6)),
-    GroupEntry((12, 5), "C6 x C2", ("C6xC2",), lambda: _PROD(_C(6), _C(2)), (1, 2, 2, 2, 3, 3, 6, 6, 6, 6, 6, 6)),
+    GroupEntry(
+        (12, 5),
+        "C6 x C2",
+        ("C6xC2",),
+        lambda: _PROD(_C(6), _C(2)),
+        (1, 2, 2, 2, 3, 3, 6, 6, 6, 6, 6, 6),
+    ),
     GroupEntry((13, 1), "C13", ("C13",), lambda: _C(13), (1,) + (13,) * 12),
-    GroupEntry((14, 1), "D7", ("D7",), lambda: _dihedral(7), (1, 2, 2, 2, 2, 2, 2, 2, 7, 7, 7, 7, 7, 7)),
-    GroupEntry((14, 2), "C14", ("C14",), lambda: _C(14), (1, 2, 7, 7, 7, 7, 7, 7, 14, 14, 14, 14, 14, 14)),
-    GroupEntry((15, 1), "C15", ("C15",), lambda: _C(15), (1, 3, 3, 5, 5, 5, 5, 15, 15, 15, 15, 15, 15, 15, 15)),
+    GroupEntry(
+        (14, 1), "D7", ("D7",), lambda: _dihedral(7), (1, 2, 2, 2, 2, 2, 2, 2, 7, 7, 7, 7, 7, 7)
+    ),
+    GroupEntry(
+        (14, 2), "C14", ("C14",), lambda: _C(14), (1, 2, 7, 7, 7, 7, 7, 7, 14, 14, 14, 14, 14, 14)
+    ),
+    GroupEntry(
+        (15, 1),
+        "C15",
+        ("C15",),
+        lambda: _C(15),
+        (1, 3, 3, 5, 5, 5, 5, 15, 15, 15, 15, 15, 15, 15, 15),
+    ),
     GroupEntry((17, 1), "C17", ("C17",), lambda: _C(17), (1,) + (17,) * 16),
-    GroupEntry((18, 1), "D9", ("D9",), lambda: _dihedral(9),
-               (1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 9, 9, 9, 9, 9, 9)),
-    GroupEntry((18, 2), "C18", ("C18",), lambda: _C(18),
-               (1, 2, 3, 3, 6, 6, 9, 9, 9, 9, 9, 9, 18, 18, 18, 18, 18, 18)),
-    GroupEntry((18, 3), "C3 x S3", ("C3xS3",), lambda: _PROD(_C(3), _S(3)),
-               (1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6)),
-    GroupEntry((18, 4), "(C3 x C3) : C2", ("Dih(C3xC3)",), _generalized_dihedral_c3xc3,
-               (1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3)),
-    GroupEntry((18, 5), "C6 x C3", ("C6xC3",), lambda: _PROD(_C(6), _C(3)),
-               (1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6)),
+    GroupEntry(
+        (18, 1),
+        "D9",
+        ("D9",),
+        lambda: _dihedral(9),
+        (1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 9, 9, 9, 9, 9, 9),
+    ),
+    GroupEntry(
+        (18, 2),
+        "C18",
+        ("C18",),
+        lambda: _C(18),
+        (1, 2, 3, 3, 6, 6, 9, 9, 9, 9, 9, 9, 18, 18, 18, 18, 18, 18),
+    ),
+    GroupEntry(
+        (18, 3),
+        "C3 x S3",
+        ("C3xS3",),
+        lambda: _PROD(_C(3), _S(3)),
+        (1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6),
+    ),
+    GroupEntry(
+        (18, 4),
+        "(C3 x C3) : C2",
+        ("Dih(C3xC3)",),
+        _generalized_dihedral_c3xc3,
+        (1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3),
+    ),
+    GroupEntry(
+        (18, 5),
+        "C6 x C3",
+        ("C6xC3",),
+        lambda: _PROD(_C(6), _C(3)),
+        (1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6),
+    ),
     GroupEntry((19, 1), "C19", ("C19",), lambda: _C(19), (1,) + (19,) * 18),
     # --- order 16 (GAP indexing from the standard SmallGroups list) ---
-    GroupEntry((16, 1), "C16", ("C16",), lambda: _C(16),
-               (1, 2, 4, 4, 8, 8, 8, 8) + (16,) * 8),
-    GroupEntry((16, 2), "C4 x C4", ("C4xC4",), lambda: _PROD(_C(4), _C(4)),
-               (1, 2, 2, 2) + (4,) * 12),
-    GroupEntry((16, 3), "(C2 x C2) : C4", ("K4:C4",), _k4_semidirect_c4,
-               (1,) + (2,) * 7 + (4,) * 8, center_orders=(1, 2, 2, 2)),
-    GroupEntry((16, 4), "C4 : C4", ("C4:C4",), _c4_semidirect_c4,
-               (1, 2, 2, 2) + (4,) * 12, square_count=3),
-    GroupEntry((16, 5), "C8 x C2", ("C8xC2",), lambda: _PROD(_C(8), _C(2)),
-               (1, 2, 2, 2, 4, 4, 4, 4) + (8,) * 8),
-    GroupEntry((16, 6), "M4(2)", ("M16",), _modular16,
-               (1, 2, 2, 2, 4, 4, 4, 4) + (8,) * 8),
-    GroupEntry((16, 7), "D8", ("D8",), lambda: _dihedral(8),
-               (1,) + (2,) * 9 + (4, 4) + (8,) * 4),
-    GroupEntry((16, 8), "SD16", ("SD16", "QD16"), _semidihedral16,
-               (1,) + (2,) * 5 + (4,) * 6 + (8,) * 4),
-    GroupEntry((16, 9), "Q16", ("Q16",), lambda: _dicyclic(4),
-               (1, 2) + (4,) * 10 + (8,) * 4),
-    GroupEntry((16, 10), "C4 x C2 x C2", ("C4xC2xC2",),
-               lambda: _PROD(_PROD(_C(4), _C(2)), _C(2)),
-               (1,) + (2,) * 7 + (4,) * 8),
-    GroupEntry((16, 11), "D4 x C2", ("D4xC2",), lambda: _PROD(_dihedral(4), _C(2)),
-               (1,) + (2,) * 11 + (4,) * 4),
-    GroupEntry((16, 12), "Q8 x C2", ("Q8xC2",), lambda: _PROD(_quaternion8(), _C(2)),
-               (1, 2, 2, 2) + (4,) * 12, square_count=2),
-    GroupEntry((16, 13), "C4 o D4 (Pauli)", ("Pauli",), _pauli_group,
-               (1,) + (2,) * 7 + (4,) * 8, center_orders=(1, 2, 4, 4)),
-    GroupEntry((16, 14), "C2^4", ("C2^4",), lambda: _elementary_abelian_2(4),
-               (1,) + (2,) * 15),
+    GroupEntry((16, 1), "C16", ("C16",), lambda: _C(16), (1, 2, 4, 4, 8, 8, 8, 8) + (16,) * 8),
+    GroupEntry(
+        (16, 2), "C4 x C4", ("C4xC4",), lambda: _PROD(_C(4), _C(4)), (1, 2, 2, 2) + (4,) * 12
+    ),
+    GroupEntry(
+        (16, 3),
+        "(C2 x C2) : C4",
+        ("K4:C4",),
+        _k4_semidirect_c4,
+        (1,) + (2,) * 7 + (4,) * 8,
+        center_orders=(1, 2, 2, 2),
+    ),
+    GroupEntry(
+        (16, 4), "C4 : C4", ("C4:C4",), _c4_semidirect_c4, (1, 2, 2, 2) + (4,) * 12, square_count=3
+    ),
+    GroupEntry(
+        (16, 5),
+        "C8 x C2",
+        ("C8xC2",),
+        lambda: _PROD(_C(8), _C(2)),
+        (1, 2, 2, 2, 4, 4, 4, 4) + (8,) * 8,
+    ),
+    GroupEntry((16, 6), "M4(2)", ("M16",), _modular16, (1, 2, 2, 2, 4, 4, 4, 4) + (8,) * 8),
+    GroupEntry((16, 7), "D8", ("D8",), lambda: _dihedral(8), (1,) + (2,) * 9 + (4, 4) + (8,) * 4),
+    GroupEntry(
+        (16, 8), "SD16", ("SD16", "QD16"), _semidihedral16, (1,) + (2,) * 5 + (4,) * 6 + (8,) * 4
+    ),
+    GroupEntry((16, 9), "Q16", ("Q16",), lambda: _dicyclic(4), (1, 2) + (4,) * 10 + (8,) * 4),
+    GroupEntry(
+        (16, 10),
+        "C4 x C2 x C2",
+        ("C4xC2xC2",),
+        lambda: _PROD(_PROD(_C(4), _C(2)), _C(2)),
+        (1,) + (2,) * 7 + (4,) * 8,
+    ),
+    GroupEntry(
+        (16, 11),
+        "D4 x C2",
+        ("D4xC2",),
+        lambda: _PROD(_dihedral(4), _C(2)),
+        (1,) + (2,) * 11 + (4,) * 4,
+    ),
+    GroupEntry(
+        (16, 12),
+        "Q8 x C2",
+        ("Q8xC2",),
+        lambda: _PROD(_quaternion8(), _C(2)),
+        (1, 2, 2, 2) + (4,) * 12,
+        square_count=2,
+    ),
+    GroupEntry(
+        (16, 13),
+        "C4 o D4 (Pauli)",
+        ("Pauli",),
+        _pauli_group,
+        (1,) + (2,) * 7 + (4,) * 8,
+        center_orders=(1, 2, 4, 4),
+    ),
+    GroupEntry((16, 14), "C2^4", ("C2^4",), lambda: _elementary_abelian_2(4), (1,) + (2,) * 15),
 ]
 
 CATALOG: dict[tuple[int, int], GroupEntry] = {e.gap_id: e for e in _ENTRIES}

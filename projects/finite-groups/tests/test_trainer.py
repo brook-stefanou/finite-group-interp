@@ -26,9 +26,9 @@ def test_from_config_derives_vocab_from_group(tmp_path, monkeypatch):
     trainer = GroupGrokkingTrainer.from_config(_config(group="C4"))
 
     assert trainer.group.order == 4
-    assert trainer.model.d_vocab_in == 5   # |G| + 1 for the "=" token
+    assert trainer.model.d_vocab_in == 5  # |G| + 1 for the "=" token
     assert trainer.model.d_vocab_out == 4  # predict a group element
-    assert trainer.model.n_ctx == 3        # [a, b, =]
+    assert trainer.model.n_ctx == 3  # [a, b, =]
 
 
 def test_inputs_have_equals_token_appended(tmp_path, monkeypatch):
@@ -37,17 +37,17 @@ def test_inputs_have_equals_token_appended(tmp_path, monkeypatch):
     eq = trainer.group.order
 
     for tokens in (trainer.train_tokens, trainer.test_tokens):
-        assert tokens.shape[1] == 3                  # [a, b, =]
+        assert tokens.shape[1] == 3  # [a, b, =]
         assert tokens.dtype == torch.long
-        assert (tokens[:, -1] == eq).all()           # last column is the "=" id
-        assert (tokens[:, :2] < eq).all()            # operands are real group elements
+        assert (tokens[:, -1] == eq).all()  # last column is the "=" id
+        assert (tokens[:, :2] < eq).all()  # operands are real group elements
 
 
 def test_split_sizes_cover_all_pairs(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     trainer = GroupGrokkingTrainer.from_config(_config(group="C4", train_frac=0.75))
 
-    n_total = trainer.group.order ** 2  # every ordered pair
+    n_total = trainer.group.order**2  # every ordered pair
     n_train = trainer.train_tokens.shape[0]
     n_test = trainer.test_tokens.shape[0]
     assert n_train + n_test == n_total

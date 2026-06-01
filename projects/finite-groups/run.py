@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 _HERE = Path(__file__).resolve()
-sys.path.insert(0, str(_HERE.parents[2]))      # repo root -> `core`
+sys.path.insert(0, str(_HERE.parents[2]))  # repo root -> `core`
 sys.path.insert(0, str(_HERE.parent / "src"))  # finite-groups src -> `finite_groups`
 
 from finite_groups.grokking.cli import main  # noqa: E402  (after sys.path setup)

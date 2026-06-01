@@ -7,9 +7,25 @@ from finite_groups.catalog import CATALOG, all_groups, build_from_id, resolve_gr
 # Known number of groups per order (the classification we must reproduce).
 # Extended order-by-order as the catalog is populated.
 EXPECTED_COUNTS = {
-    1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 2, 7: 1, 8: 5,
-    9: 2, 10: 2, 11: 1, 12: 5, 13: 1, 14: 2, 15: 1, 16: 14,
-    17: 1, 18: 5, 19: 1,
+    1: 1,
+    2: 1,
+    3: 1,
+    4: 2,
+    5: 1,
+    6: 2,
+    7: 1,
+    8: 5,
+    9: 2,
+    10: 2,
+    11: 1,
+    12: 5,
+    13: 1,
+    14: 2,
+    15: 1,
+    16: 14,
+    17: 1,
+    18: 5,
+    19: 1,
 }
 
 
@@ -27,9 +43,7 @@ def _element_orders(group) -> tuple[int, ...]:
 
 def _center_orders(group) -> tuple[int, ...]:
     els = group.elements
-    center = [
-        g for g in els if all(group.multiply(g, h) == group.multiply(h, g) for h in els)
-    ]
+    center = [g for g in els if all(group.multiply(g, h) == group.multiply(h, g) for h in els)]
     identity = group.elements[group._check_identity()]
     orders = []
     for g in center:
@@ -94,11 +108,11 @@ def test_all_groups_filters_by_order():
 
 
 def test_resolve_group_handles_alias_id_and_family():
-    assert resolve_group("A4").order == 12   # catalog alias (build_group can't do A_n)
-    assert resolve_group("Q8").order == 8    # catalog alias
+    assert resolve_group("A4").order == 12  # catalog alias (build_group can't do A_n)
+    assert resolve_group("Q8").order == 8  # catalog alias
     assert resolve_group("16,3").order == 16  # GAP id
-    assert resolve_group("C8").order == 8    # parametric family fallback
-    assert resolve_group("S3").order == 6    # alias and family agree
+    assert resolve_group("C8").order == 8  # parametric family fallback
+    assert resolve_group("S3").order == 6  # alias and family agree
 
 
 def test_catalog_is_complete_through_order_19():

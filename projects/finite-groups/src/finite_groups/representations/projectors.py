@@ -70,9 +70,7 @@ def real_isotypic_blocks(group: FiniteGroup) -> list[IsotypicBlock]:
             (
                 j
                 for j in range(k)
-                if j != i
-                and j not in used
-                and np.allclose(table[j], conjugate_row, atol=1e-6)
+                if j != i and j not in used and np.allclose(table[j], conjugate_row, atol=1e-6)
             ),
             None,
         )

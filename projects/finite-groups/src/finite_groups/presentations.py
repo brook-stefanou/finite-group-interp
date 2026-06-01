@@ -37,9 +37,7 @@ def _inv(symbol: int) -> int:
     return symbol ^ 1
 
 
-def from_presentation(
-    generators: str, relations: list[str], max_order: int = 2048
-) -> FiniteGroup:
+def from_presentation(generators: str, relations: list[str], max_order: int = 2048) -> FiniteGroup:
     """Construct the finite group presented by ``generators`` and ``relations``."""
     symbol_of = _parse_symbols(generators)
     n_symbols = 2 * len(generators)

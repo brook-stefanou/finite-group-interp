@@ -24,13 +24,13 @@ def set_seed(seed: int) -> None:
 
 class BaseTrainer:
     """A highly extensible, robust base trainer for the AI Safety Portfolio.
-    
+
     Handles:
         - Absolute reproducibility (seed management)
         - Structured metadata & manifest tracking (run lifecycle, status, Git hashes)
         - Dual logging: Local structured JSONL + Weights & Biases (W&B)
         - Built-in exception safety (crashes are caught, tracebacks stored, loggers closed)
-        - Clean lifecycle callback hooks for downstream projects to inject custom logic 
+        - Clean lifecycle callback hooks for downstream projects to inject custom logic
           (e.g., mechanistic interpretability metrics, attention SVDs, Cayley tables)
     """
 
@@ -38,18 +38,19 @@ class BaseTrainer:
         self.config = config
         self.model = model
         self.current_epoch = 0
-        
+
         # Absolute reproducibility
         set_seed(self.config.experiment.seed)
-        
+
         # Lifecycle directory and run ID
         from .manifest import create_run_id
+
         self.run_id = create_run_id(self.config.experiment.name)
         self.run_dir = create_run_dir(self.run_id)
-        
+
         # Local logger initialization
         self.jsonl_logger = JSONLLogger(self.run_dir / "metrics.jsonl")
-        
+
         # Optional W&B logger initialization
         self.wandb_run = None
         if self.config.experiment.use_wandb:
@@ -58,6 +59,7 @@ class BaseTrainer:
     def _init_wandb(self) -> None:
         try:
             import wandb
+
             self.wandb_run = wandb.init(
                 project=self.config.experiment.wandb_project,
                 entity=self.config.experiment.wandb_entity,
@@ -66,7 +68,9 @@ class BaseTrainer:
                 id=self.run_id,
             )
         except ImportError:
-            print("Warning: use_wandb=True but 'wandb' package is not installed. Logging locally only.")
+            print(
+                "Warning: use_wandb=True but 'wandb' package is not installed. Logging locally only."
+            )
 
     def log(self, metrics: dict, step: int | None = None) -> None:
         """Log metrics to both JSONL and W&B."""
@@ -74,10 +78,11 @@ class BaseTrainer:
         log_entry = {"step": step} if step is not None else {}
         log_entry.update(metrics)
         self.jsonl_logger.log(log_entry)
-        
+
         # Log to W&B
         if self.wandb_run is not None:
             import wandb
+
             wandb.log(metrics, step=step)
 
     def save_checkpoint(self, name: str, metadata: dict | None = None) -> Path:
@@ -85,7 +90,7 @@ class BaseTrainer:
         checkpoint_dir = self.run_dir / "checkpoints"
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
         checkpoint_path = checkpoint_dir / f"{name}.pt"
-        
+
         checkpoint_payload = {
             "model_state_dict": self.model.state_dict(),
             "epoch": self.current_epoch,
@@ -93,7 +98,7 @@ class BaseTrainer:
         }
         if metadata is not None:
             checkpoint_payload.update(metadata)
-            
+
         torch.save(checkpoint_payload, checkpoint_path)
         return checkpoint_path
 
@@ -101,27 +106,30 @@ class BaseTrainer:
         """Main training lifecycle wrapper with safety context."""
         create_manifest(self.config, self.run_dir)
         save_resolved_config(self.config, self.run_dir)
-        
+
         try:
             self.on_train_start()
             final_metrics = self.train_loop()
             self.on_train_end(final_metrics)
-            
+
             # Record successful completion
             update_manifest(self.run_dir, status="completed", final_metrics=final_metrics)
             return final_metrics
-            
+
         except Exception as e:
             # Catch any crash, record traceback, update manifest, and propagate
             tb_str = traceback.format_exc()
             print(f"Error occurred during training:\n{tb_str}", file=sys.stderr)
             update_manifest(self.run_dir, status="failed", error=tb_str)
-            
+
             # Log to W&B
             if self.wandb_run is not None:
                 import wandb
-                wandb.alert(title="Run Failed", text=f"Run {self.run_id} failed with error: {str(e)}")
-            
+
+                wandb.alert(
+                    title="Run Failed", text=f"Run {self.run_id} failed with error: {str(e)}"
+                )
+
             raise e
         finally:
             self.close()
@@ -161,4 +169,5 @@ class BaseTrainer:
         self.jsonl_logger.close()
         if self.wandb_run is not None:
             import wandb
+
             wandb.finish()

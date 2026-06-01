@@ -92,5 +92,5 @@ def test_snapshot_event_fields():
 
 def test_experiment_reproducibility_defaults():
     exp = _experiment()
-    assert exp.device == "cpu"          # reproducible + fast for small models
+    assert exp.device == "cpu"  # reproducible + fast for small models
     assert exp.deterministic is True

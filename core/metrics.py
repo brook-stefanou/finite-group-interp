@@ -9,7 +9,7 @@ def compute_accuracy(outputs: torch.Tensor, targets: torch.Tensor) -> float:
     else:
         # Multi-class classification
         preds = outputs.argmax(dim=-1)
-    
+
     correct = (preds == targets).sum().item()
     total = targets.size(0)
     return correct / total if total > 0 else 0.0
@@ -20,10 +20,10 @@ def compute_calibration_stats(probs: torch.Tensor, targets: torch.Tensor) -> dic
     # Basic calibration diagnostics
     preds = probs.argmax(dim=-1)
     max_probs = probs.max(dim=-1).values
-    
+
     accuracy = (preds == targets).float().mean().item()
     confidence = max_probs.mean().item()
-    
+
     return {
         "accuracy": accuracy,
         "mean_confidence": confidence,

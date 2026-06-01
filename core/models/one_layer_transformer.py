@@ -12,8 +12,18 @@ class OneLayerTransformer(nn.Module):
     the state_dict doubles as the analysis weight contract.
     """
 
-    def __init__(self, d_vocab_in: int, d_vocab_out: int, n_ctx: int, d_model: int,
-                 n_heads: int, use_mlp: bool, d_mlp: int, activation: str, init_std: float):
+    def __init__(
+        self,
+        d_vocab_in: int,
+        d_vocab_out: int,
+        n_ctx: int,
+        d_model: int,
+        n_heads: int,
+        use_mlp: bool,
+        d_mlp: int,
+        activation: str,
+        init_std: float,
+    ):
         super().__init__()
         assert d_model % n_heads == 0, (
             f"Model dimension ({d_model}) is not evenly divisible by number of heads "
@@ -51,18 +61,40 @@ class OneLayerTransformer(nn.Module):
     def forward(self, tokens: torch.Tensor) -> torch.Tensor:
         # tokens: [batch, n_ctx] int64 ids; returns logits [batch, n_ctx, d_vocab_out]
         resid = self.W_E[tokens] + self.W_pos
-        q = einops.einsum(resid, self.W_Q, 'batch pos d_model, head d_model d_head -> batch head pos d_head')
-        k = einops.einsum(resid, self.W_K, 'batch pos d_model, head d_model d_head -> batch head pos d_head')
-        v = einops.einsum(resid, self.W_V, 'batch pos d_model, head d_model d_head -> batch head pos d_head')
-        attn_scores = einops.einsum(q, k, 'batch head query_pos d_head, batch head key_pos d_head -> batch head query_pos key_pos')
-        attn_scores = attn_scores / (self.d_head ** 0.5)
+        q = einops.einsum(
+            resid, self.W_Q, "batch pos d_model, head d_model d_head -> batch head pos d_head"
+        )
+        k = einops.einsum(
+            resid, self.W_K, "batch pos d_model, head d_model d_head -> batch head pos d_head"
+        )
+        v = einops.einsum(
+            resid, self.W_V, "batch pos d_model, head d_model d_head -> batch head pos d_head"
+        )
+        attn_scores = einops.einsum(
+            q,
+            k,
+            "batch head query_pos d_head, batch head key_pos d_head -> batch head query_pos key_pos",
+        )
+        attn_scores = attn_scores / (self.d_head**0.5)
         pattern = torch.softmax(attn_scores, dim=-1)
-        z = einops.einsum(pattern, v, 'batch head query_pos key_pos, batch head key_pos d_head -> batch head query_pos d_head')
-        attn_out = einops.einsum(z, self.W_O, 'batch head pos d_head, head d_head d_model -> batch pos d_model')
+        z = einops.einsum(
+            pattern,
+            v,
+            "batch head query_pos key_pos, batch head key_pos d_head -> batch head query_pos d_head",
+        )
+        attn_out = einops.einsum(
+            z, self.W_O, "batch head pos d_head, head d_head d_model -> batch pos d_model"
+        )
         resid = resid + attn_out
         if self.use_mlp:
-            resid = einops.einsum(resid, self.W_in, 'batch pos d_model, d_model d_mlp -> batch pos d_mlp')
+            resid = einops.einsum(
+                resid, self.W_in, "batch pos d_model, d_model d_mlp -> batch pos d_mlp"
+            )
             resid = self.activation(resid)
-            resid = einops.einsum(resid, self.W_out, 'batch pos d_mlp, d_mlp d_model -> batch pos d_model')
-        logits = einops.einsum(resid, self.W_U, 'batch pos d_model, d_model vocab_out -> batch pos vocab_out')
+            resid = einops.einsum(
+                resid, self.W_out, "batch pos d_mlp, d_mlp d_model -> batch pos d_model"
+            )
+        logits = einops.einsum(
+            resid, self.W_U, "batch pos d_model, d_model vocab_out -> batch pos vocab_out"
+        )
         return logits
