@@ -1,3 +1,5 @@
+import json
+
 import torch
 
 from core.config_schema import ExperimentConfig
@@ -10,12 +12,12 @@ from finite_groups.grokking.config import (
 from finite_groups.grokking.trainer import GroupGrokkingTrainer
 
 
-def _config(group="C4", train_frac=0.8, epochs=300, weight_decay=1.0):
+def _config(group="C4", train_frac=0.8, epochs=300, weight_decay=1.0, log_every=1):
     return GrokkingConfig(
         experiment=ExperimentConfig(name="test", seed=0),
         data=DataConfig(group=group, train_frac=train_frac),
         model=ModelConfig(d_model=32, n_heads=4, d_mlp=64),
-        optim=OptimConfig(lr=1e-3, weight_decay=weight_decay, epochs=epochs),
+        optim=OptimConfig(lr=1e-3, weight_decay=weight_decay, epochs=epochs, log_every=log_every),
     )
 
 
@@ -83,3 +85,14 @@ def test_fit_writes_weight_snapshots(tmp_path, monkeypatch):
 
     checkpoints = list((trainer.run_dir / "checkpoints").glob("*.pt"))
     assert len(checkpoints) > 0  # snapshot schedule fired (step 0 + powers of two)
+
+
+def test_log_every_controls_logging_cadence(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    trainer = GroupGrokkingTrainer.from_config(_config(group="C4", epochs=20, log_every=5))
+    trainer.fit()
+
+    lines = (trainer.run_dir / "metrics.jsonl").read_text().splitlines()
+    steps = [json.loads(line)["step"] for line in lines if line.strip()]
+    # logged at multiples of 5, plus the final epoch (19)
+    assert steps == [0, 5, 10, 15, 19]

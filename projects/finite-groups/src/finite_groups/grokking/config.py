@@ -20,17 +20,11 @@ class DataConfig(BaseModel):
 
 
 class ModelConfig(BaseModel):
-    # Defaults are sized for groups of order < 20 (small, fast, cleaner circuits
-    # for interpretability), not the larger transformer conventions.
     d_model: int = Field(64, gt=0)
     n_heads: int = Field(4, gt=0)
     d_mlp: int = Field(256, gt=0)
     use_mlp: bool = True  # MLP carries the group-multiply circuit; usually keep on
-    # The config names the activation; the model maps it to an nn module. ReLU is
-    # piecewise-linear and the easiest to reverse-engineer, so it's the default.
     activation: Literal["relu", "gelu", "silu"] = "relu"
-    # Initial weight std. Worth a config knob (not just a hardcoded default)
-    # because init scale interacts with weight decay to shape the grokking onset.
     init_std: float = Field(0.02, gt=0.0)
 
 
@@ -39,12 +33,16 @@ class OptimConfig(BaseModel):
     weight_decay: float = Field(1.0, ge=0.0)  # high weight decay drives grokking
     epochs: int = Field(10_000, gt=0)
     full_batch: bool = True
+    log_every: int = Field(1, gt=0)  # evaluate + log metrics every N epochs
 
 
 class SnapshotConfig(BaseModel):
     enabled: bool = True
     log_dense_until: int = Field(1024, ge=0)  # powers of 2 snapshotted up to here
     interval: int = Field(1000, gt=0)  # then snapshot every `interval` steps
+    # Event-based densification: also snapshot when the test loss drops sharply between evals
+    event_based: bool = True
+    event_rel_drop: float = Field(0.1, gt=0.0)  # relative test-loss drop that triggers a snapshot
 
 
 class GrokkingConfig(BaseConfig):

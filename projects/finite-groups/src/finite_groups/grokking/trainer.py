@@ -48,21 +48,35 @@ class GroupGrokkingTrainer(BaseTrainer):
         return cls(config, model, group)
     
     def train_loop(self):
+        snap = self.config.snapshot
+        last_epoch = self.config.optim.epochs - 1
+        prev_test_loss = float("inf")
+        metrics = {}
+
         for epoch in range(self.config.optim.epochs):
             self.current_epoch = epoch
             self.optimizer.zero_grad()
             logits = self.model(self.train_tokens)
-            readout = logits[:, -1, :] # the '=' position
+            readout = logits[:, -1, :]  # the '=' position
             loss = F.cross_entropy(readout, self.train_targets)
-            loss.backward(); self.optimizer.step()
+            loss.backward()
+            self.optimizer.step()
 
-            # metrics (train + test loss/acc) -> self.log(metrics, step = epoch)
-            train_m = self._evaluate(self.train_tokens, self.train_targets)
-            test_m = self._evaluate(self.test_tokens, self.test_targets)
-            metrics = {"train_loss": train_m["loss"], "train_acc": train_m["accuracy"],
-                       "test_loss": test_m["loss"], "test_acc": test_m["accuracy"]}
-            self.log(metrics, step=epoch)
-            if should_snapshot(epoch, self.config.snapshot):
+            event = False
+            if epoch % self.config.optim.log_every == 0 or epoch == last_epoch:
+                train_acc = (readout.argmax(dim=-1) == self.train_targets).float().mean().item()
+                test_m = self._evaluate(self.test_tokens, self.test_targets)
+                metrics = {"train_loss": loss.item(), "train_acc": train_acc,
+                           "test_loss": test_m["loss"], "test_acc": test_m["accuracy"]}
+                self.log(metrics, step=epoch)
+
+                # Snapshot densely when the test loss drops sharply
+                if snap.event_based and prev_test_loss < float("inf"):
+                    rel_drop = (prev_test_loss - test_m["loss"]) / prev_test_loss
+                    event = rel_drop > snap.event_rel_drop
+                prev_test_loss = test_m["loss"]
+
+            if should_snapshot(epoch, snap) or event:
                 self.save_checkpoint(f"step_{epoch}")
         return metrics
     

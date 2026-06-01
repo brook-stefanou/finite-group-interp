@@ -7,6 +7,7 @@ from finite_groups.grokking.config import (
     GrokkingConfig,
     ModelConfig,
     OptimConfig,
+    SnapshotConfig,
 )
 
 
@@ -72,3 +73,18 @@ def test_init_std_is_positive():
     assert cfg.model.init_std > 0
     with pytest.raises(ValidationError):
         ModelConfig(init_std=0.0)
+
+
+def test_log_every_default_and_positive():
+    cfg = GrokkingConfig(experiment=_experiment())
+    assert cfg.optim.log_every == 1
+    with pytest.raises(ValidationError):
+        OptimConfig(log_every=0)
+
+
+def test_snapshot_event_fields():
+    cfg = GrokkingConfig(experiment=_experiment())
+    assert cfg.snapshot.event_based is True
+    assert cfg.snapshot.event_rel_drop > 0
+    with pytest.raises(ValidationError):
+        SnapshotConfig(event_rel_drop=0.0)
