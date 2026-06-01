@@ -61,7 +61,9 @@ def create_run_dir(run_id: str) -> Path:
 def create_manifest(config: BaseConfig, run_dir: Path) -> dict:
     run_id = run_dir.name
     config_hash = compute_config_hash(config)
-    device = detect_device()
+    # Record the configured device (what the run used) and whether torch
+    # deterministic algorithms were active -- both matter for reproducibility.
+    device = getattr(config.experiment, "device", None) or detect_device()
 
     manifest = {
         "run_id": run_id,
@@ -70,6 +72,8 @@ def create_manifest(config: BaseConfig, run_dir: Path) -> dict:
         "experiment_name": config.experiment.name,
         "seed": config.experiment.seed,
         "device": device,
+        "deterministic": torch.are_deterministic_algorithms_enabled(),
+        "available_device": detect_device(),
         "python_version": platform.python_version(),
         "torch_version": torch.__version__,
         "git_commit": get_git_commit(),

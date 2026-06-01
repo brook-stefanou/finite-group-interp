@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
-from core.trainer import BaseTrainer
+from core.trainer import BaseTrainer, set_seed
 from core.models.one_layer_transformer import OneLayerTransformer
 from finite_groups.group import FiniteGroup
 from finite_groups.presentations import build_group
@@ -13,8 +13,10 @@ class GroupGrokkingTrainer(BaseTrainer):
     config: GrokkingConfig
     def __init__(self, config: GrokkingConfig, model: torch.nn.Module, group: FiniteGroup):
         super().__init__(config, model)
+        if config.experiment.deterministic:
+            torch.use_deterministic_algorithms(True)
         self.group = group
-        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+        self.device = torch.device(config.experiment.device)
         self.model = model.to(self.device)
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.config.optim.lr, weight_decay=self.config.optim.weight_decay)
         task = build_group_task(self.group)
@@ -33,6 +35,7 @@ class GroupGrokkingTrainer(BaseTrainer):
 
     @classmethod
     def from_config(cls, config: GrokkingConfig) -> "GroupGrokkingTrainer":
+        set_seed(config.experiment.seed)  # seed before model init so weights are reproducible
         group = build_group(config.data.group)
         model = OneLayerTransformer(
             d_vocab_in = group.order + 1, # group elements + '='

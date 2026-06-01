@@ -96,3 +96,24 @@ def test_log_every_controls_logging_cadence(tmp_path, monkeypatch):
     steps = [json.loads(line)["step"] for line in lines if line.strip()]
     # logged at multiples of 5, plus the final epoch (19)
     assert steps == [0, 5, 10, 15, 19]
+
+
+def test_from_config_initialises_reproducibly(tmp_path, monkeypatch):
+    # Same config (same seed) => identical initial weights, because from_config
+    # seeds before building the model.
+    monkeypatch.chdir(tmp_path)
+    a = GroupGrokkingTrainer.from_config(_config(group="S3"))
+    b = GroupGrokkingTrainer.from_config(_config(group="S3"))
+    assert torch.equal(a.model.W_E, b.model.W_E)
+
+
+def test_determinism_enabled_and_recorded(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    trainer = GroupGrokkingTrainer.from_config(_config(group="C4", epochs=5))
+    assert torch.are_deterministic_algorithms_enabled()
+    assert str(trainer.device) == "cpu"
+
+    trainer.fit()
+    manifest = json.loads((trainer.run_dir / "manifest.json").read_text())
+    assert manifest["deterministic"] is True
+    assert manifest["device"] == "cpu"

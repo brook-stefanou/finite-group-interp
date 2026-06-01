@@ -88,3 +88,9 @@ def test_snapshot_event_fields():
     assert cfg.snapshot.event_rel_drop > 0
     with pytest.raises(ValidationError):
         SnapshotConfig(event_rel_drop=0.0)
+
+
+def test_experiment_reproducibility_defaults():
+    exp = _experiment()
+    assert exp.device == "cpu"          # reproducible + fast for small models
+    assert exp.deterministic is True
