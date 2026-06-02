@@ -89,6 +89,16 @@ def test_print_every_default_and_positive():
         OptimConfig(print_every=0)
 
 
+def test_betas_default_and_validation():
+    # beta2=0.98 is the modular-addition default that damps slingshot loss spikes.
+    cfg = GrokkingConfig(experiment=_experiment())
+    assert cfg.optim.betas == (0.9, 0.98)
+    with pytest.raises(ValidationError):
+        OptimConfig(betas=(0.9, 1.0))  # beta must be < 1
+    with pytest.raises(ValidationError):
+        OptimConfig(betas=(-0.1, 0.98))  # beta must be >= 0
+
+
 def test_snapshot_event_fields():
     cfg = GrokkingConfig(experiment=_experiment())
     assert cfg.snapshot.event_based is True

@@ -8,7 +8,7 @@ does not depend on the model.
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from core.config_schema import BaseConfig
 
@@ -30,11 +30,21 @@ class ModelConfig(BaseModel):
 
 class OptimConfig(BaseModel):
     lr: float = Field(1e-3, gt=0.0)
+    # AdamW betas. beta2=0.98 (vs PyTorch's 0.999) damps the slingshot-style loss
+    # spikes seen in full-batch grokking runs; this is the modular-addition default.
+    betas: tuple[float, float] = (0.9, 0.98)
     weight_decay: float = Field(1.0, ge=0.0)  # high weight decay drives grokking
     epochs: int = Field(10_000, gt=0)
     full_batch: bool = True
     log_every: int = Field(1, gt=0)  # evaluate + log metrics every N epochs
     print_every: int = Field(1000, gt=0)  # print a console progress line every N epochs
+
+    @field_validator("betas")
+    @classmethod
+    def _betas_in_unit_interval(cls, v: tuple[float, float]) -> tuple[float, float]:
+        if not all(0.0 <= b < 1.0 for b in v):
+            raise ValueError(f"each beta must be in [0, 1), got {v}")
+        return v
 
 
 class SnapshotConfig(BaseModel):

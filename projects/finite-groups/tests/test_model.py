@@ -62,20 +62,24 @@ def test_state_dict_exposes_the_weight_contract():
     assert CONTRACT <= set(m.state_dict().keys())
 
 
-def test_init_std_controls_weight_scale():
-    big = OneLayerTransformer(
-        d_vocab_in=6,
-        d_vocab_out=5,
+def test_init_uses_fan_in_scaling():
+    # Nanda's grokking init: weights ~ N(0, 1/d_model); unembed ~ N(0, 1/d_vocab_out).
+    # init_std is ignored (the scale is fixed to fan-in, not config-driven).
+    torch.manual_seed(0)
+    m = OneLayerTransformer(
+        d_vocab_in=64,
+        d_vocab_out=63,
         n_ctx=3,
-        d_model=8,
-        n_heads=2,
+        d_model=128,
+        n_heads=4,
         use_mlp=True,
-        d_mlp=16,
+        d_mlp=512,
         activation="relu",
-        init_std=1.0,
+        init_std=0.02,  # deliberately ignored
     )
-    small = _model()  # init_std=0.02
-    assert big.W_E.std() > small.W_E.std()
+    assert m.W_E.std().item() == pytest.approx(128**-0.5, rel=0.1)
+    assert m.W_in.std().item() == pytest.approx(128**-0.5, rel=0.1)
+    assert m.W_U.std().item() == pytest.approx(63**-0.5, rel=0.1)
 
 
 def test_indivisible_d_model_raises():

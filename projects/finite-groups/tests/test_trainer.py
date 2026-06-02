@@ -117,3 +117,21 @@ def test_determinism_enabled_and_recorded(tmp_path, monkeypatch):
     manifest = json.loads((trainer.run_dir / "manifest.json").read_text())
     assert manifest["deterministic"] is True
     assert manifest["device"] == "cpu"
+
+
+def test_optimizer_uses_configured_betas(tmp_path, monkeypatch):
+    # The configured betas must reach the AdamW instance, not PyTorch's defaults.
+    monkeypatch.chdir(tmp_path)
+    config = _config(group="C4")
+    config.optim.betas = (0.9, 0.95)
+    trainer = GroupGrokkingTrainer.from_config(config)
+    assert trainer.optimizer.param_groups[0]["betas"] == (0.9, 0.95)
+
+
+def test_logs_weight_norm(tmp_path, monkeypatch):
+    # weight_norm is logged as the grokking progress measure.
+    monkeypatch.chdir(tmp_path)
+    trainer = GroupGrokkingTrainer.from_config(_config(group="C4", epochs=5))
+    final = trainer.fit()
+    assert "weight_norm" in final
+    assert final["weight_norm"] > 0

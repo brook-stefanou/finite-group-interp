@@ -37,6 +37,7 @@ class GroupGrokkingTrainer(BaseTrainer):
         self.optimizer = torch.optim.AdamW(
             self.model.parameters(),
             lr=self.config.optim.lr,
+            betas=self.config.optim.betas,
             weight_decay=self.config.optim.weight_decay,
         )
         task = build_group_task(self.group)
@@ -96,11 +97,17 @@ class GroupGrokkingTrainer(BaseTrainer):
             if epoch % self.config.optim.log_every == 0 or epoch == last_epoch:
                 train_acc = (readout.argmax(dim=-1) == self.train_targets).float().mean().item()
                 test_m = self._evaluate(self.test_tokens, self.test_targets)
+                # Total L2 norm of all weights -- the grokking "progress measure":
+                # weight decay drives this down, and generalization tracks it.
+                weight_norm = (
+                    sum(p.detach().pow(2).sum() for p in self.model.parameters()).sqrt().item()
+                )
                 metrics = {
                     "train_loss": loss.item(),
                     "train_acc": train_acc,
                     "test_loss": test_m["loss"],
                     "test_acc": test_m["accuracy"],
+                    "weight_norm": weight_norm,
                 }
                 self.log(metrics, step=epoch)
 

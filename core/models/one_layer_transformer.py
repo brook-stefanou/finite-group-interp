@@ -40,16 +40,23 @@ class OneLayerTransformer(nn.Module):
         self.n_heads = n_heads
         self.init_std = init_std
 
-        self.W_E = nn.Parameter(torch.randn(d_vocab_in, d_model) * init_std)
-        self.W_pos = nn.Parameter(torch.randn(n_ctx, d_model) * init_std)
-        self.W_Q = nn.Parameter(torch.randn(n_heads, d_model, d_head) * init_std)
-        self.W_K = nn.Parameter(torch.randn(n_heads, d_model, d_head) * init_std)
-        self.W_V = nn.Parameter(torch.randn(n_heads, d_model, d_head) * init_std)
-        self.W_O = nn.Parameter(torch.randn(n_heads, d_head, d_model) * init_std)
+        # Initialization follows Nanda's grokking transformer: every weight is
+        # scaled by 1/sqrt(d_model) (fan-in), except the unembedding, which uses
+        # 1/sqrt(d_vocab_out). This places the model in the weight-norm regime
+        # where grokking appears within the training budget, and is deliberately
+        # fixed rather than config-driven. `init_std` is retained on the signature
+        # for caller compatibility but no longer controls the scale.
+        scale = d_model**-0.5
+        self.W_E = nn.Parameter(torch.randn(d_vocab_in, d_model) * scale)
+        self.W_pos = nn.Parameter(torch.randn(n_ctx, d_model) * scale)
+        self.W_Q = nn.Parameter(torch.randn(n_heads, d_model, d_head) * scale)
+        self.W_K = nn.Parameter(torch.randn(n_heads, d_model, d_head) * scale)
+        self.W_V = nn.Parameter(torch.randn(n_heads, d_model, d_head) * scale)
+        self.W_O = nn.Parameter(torch.randn(n_heads, d_head, d_model) * scale)
         if use_mlp:
-            self.W_in = nn.Parameter(torch.randn(d_model, d_mlp) * init_std)
-            self.W_out = nn.Parameter(torch.randn(d_mlp, d_model) * init_std)
-        self.W_U = nn.Parameter(torch.randn(d_model, d_vocab_out) * init_std)
+            self.W_in = nn.Parameter(torch.randn(d_model, d_mlp) * scale)
+            self.W_out = nn.Parameter(torch.randn(d_mlp, d_model) * scale)
+        self.W_U = nn.Parameter(torch.randn(d_model, d_vocab_out) * d_vocab_out**-0.5)
 
         activations = {
             "relu": nn.ReLU(),
