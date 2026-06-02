@@ -76,6 +76,7 @@ def create_manifest(config: BaseConfig, run_dir: Path) -> dict:
     manifest = {
         "run_id": run_id,
         "config_hash": config_hash,
+        "config": config.model_dump(),  # full resolved config -> self-contained provenance
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "experiment_name": config.experiment.name,
         "seed": config.experiment.seed,
