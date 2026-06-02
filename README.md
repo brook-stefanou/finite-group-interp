@@ -23,7 +23,7 @@ ai-safety-portfolio/
 │   ├── metrics.py
 │   └── trainer.py
 └── projects/                       # Independent research workspaces
-    └── finite-groups/              # Active grokking experiment
+    └── finite-groups/              # How networks learn finite group operations
 ```
 
 ---
@@ -32,10 +32,10 @@ ai-safety-portfolio/
 
 ### Active
 
-#### Representation Alignment in Finite Group Grokking
-* **Goal:** Does the training dynamics of algorithmic networks implicitly solve the group's representation theory? Specifically, does the network's internal representation align with the group's irreducible representations, and does the phase transition of grokking correspond to the collapse of general weight matrices onto the spanned subspaces of these irreducible representations?
-* **Scope:** Training 1-layer attention-only transformers over all finite groups of order less than 20, mapping the geometry of internal embedding matrices against their canonical irreducible characters.
-* **Interpretability Methods:** Canonical projections of embedding and attention weights onto isotypic components, Singular Value Decomposition of weights over training time, and bilinear asymmetry analysis.
+#### How Neural Networks Learn Finite Group Operations
+* **Question (broad, narrowing):** When a network learns to compose elements of a finite group, *what algorithm and internal representation does it use* — and how does that depend on the group's structure and the model architecture? This engages an open debate in the literature: do networks compose via the group's **irreducible representations** ([Chughtai et al., 2023](https://arxiv.org/abs/2302.03025)) or via **coset / subgroup structure** ([Stander et al., 2024](https://arxiv.org/abs/2312.06581))? Grokking is one phenomenon studied along the way, not the sole focus.
+* **Approach:** Build finite groups (a complete catalog of order < 20, plus larger groups via presentations / Todd–Coxeter), train small models (a 1-layer attention+MLP transformer, with a fully-connected baseline planned) on the multiplication task, and reverse-engineer the learned computation.
+* **Interpretability methods:** projections of embedding/attention weights onto isotypic (irreducible-representation) components, planned coset/subgroup-alignment metrics, singular value decomposition of weights over training, and bilinear-asymmetry analysis. The specific question will be locked in as the evidence points somewhere sharp.
 
 ---
 

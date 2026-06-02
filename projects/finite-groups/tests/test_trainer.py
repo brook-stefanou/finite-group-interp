@@ -3,13 +3,13 @@ import json
 import torch
 
 from core.config_schema import ExperimentConfig
-from finite_groups.grokking.config import (
+from finite_groups.experiments.config import (
     DataConfig,
     GrokkingConfig,
     ModelConfig,
     OptimConfig,
 )
-from finite_groups.grokking.trainer import GroupGrokkingTrainer
+from finite_groups.experiments.trainer import GroupGrokkingTrainer
 
 
 def _config(group="C4", train_frac=0.8, epochs=300, weight_decay=1.0, log_every=1):

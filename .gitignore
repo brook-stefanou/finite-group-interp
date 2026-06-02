@@ -53,6 +53,9 @@ checkpoints/
 # Training run records and manifests
 runs/
 
+# Private research notes (kept local; not part of the public write-up)
+notes/
+
 # Weights & Biases
 wandb/
 .wandb

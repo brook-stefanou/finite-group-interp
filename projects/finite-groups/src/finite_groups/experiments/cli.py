@@ -1,8 +1,8 @@
-# Command-line entry for grokking runs, with OmegaConf dotted overrides.
+# Command-line entry for experiment runs, with OmegaConf dotted overrides.
 from omegaconf import OmegaConf
 
-from finite_groups.grokking.config import GrokkingConfig
-from finite_groups.grokking.trainer import GroupGrokkingTrainer
+from finite_groups.experiments.config import GrokkingConfig
+from finite_groups.experiments.trainer import GroupGrokkingTrainer
 
 
 def build_config(overrides: list[str]) -> GrokkingConfig:

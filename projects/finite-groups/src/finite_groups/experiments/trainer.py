@@ -5,9 +5,23 @@ from core.trainer import BaseTrainer, set_seed
 from core.models.one_layer_transformer import OneLayerTransformer
 from finite_groups.group import FiniteGroup
 from finite_groups.catalog import resolve_group
-from finite_groups.grokking.config import GrokkingConfig
-from finite_groups.grokking.data import build_group_task, train_test_split
-from finite_groups.grokking.schedule import should_snapshot
+from finite_groups.experiments.config import GrokkingConfig, SnapshotConfig
+from finite_groups.task import build_group_task, train_test_split
+
+
+def _is_power_of_two(n: int) -> bool:
+    return n > 0 and (n & (n - 1)) == 0
+
+
+def should_snapshot(step: int, config: SnapshotConfig) -> bool:
+    """When to checkpoint weights: step 0, powers of two early, then periodic."""
+    if not config.enabled or step < 0:
+        return False
+    if step == 0:
+        return True
+    if step <= config.log_dense_until and _is_power_of_two(step):
+        return True
+    return step % config.interval == 0
 
 
 class GroupGrokkingTrainer(BaseTrainer):

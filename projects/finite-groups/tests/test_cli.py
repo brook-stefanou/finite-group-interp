@@ -1,4 +1,4 @@
-from finite_groups.grokking.cli import build_config
+from finite_groups.experiments.cli import build_config
 
 
 def test_overrides_are_applied():

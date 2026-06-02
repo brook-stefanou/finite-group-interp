@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from core.config_schema import BaseConfig, ExperimentConfig
-from finite_groups.grokking.config import (
+from finite_groups.experiments.config import (
     DataConfig,
     GrokkingConfig,
     ModelConfig,

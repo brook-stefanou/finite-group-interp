@@ -1,5 +1,5 @@
-from finite_groups.grokking.config import SnapshotConfig
-from finite_groups.grokking.schedule import should_snapshot
+from finite_groups.experiments.config import SnapshotConfig
+from finite_groups.experiments.trainer import should_snapshot
 
 
 def test_initial_step_is_always_snapshotted():

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from finite_groups.generators import GroupGenerators
-from finite_groups.grokking.data import build_group_task, train_test_split
+from finite_groups.task import build_group_task, train_test_split
 
 
 def test_task_has_every_ordered_pair_once():
