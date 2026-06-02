@@ -83,6 +83,7 @@ class GroupGrokkingTrainer(BaseTrainer):
         last_epoch = self.config.optim.epochs - 1
         prev_test_loss = float("inf")
         metrics = {}
+        grok_streak = 0  # consecutive evals with test_acc above the grok threshold
 
         for epoch in range(self.config.optim.epochs):
             self.current_epoch = epoch
@@ -125,8 +126,22 @@ class GroupGrokkingTrainer(BaseTrainer):
                     event = rel_drop > snap.event_rel_drop
                 prev_test_loss = test_m["loss"]
 
+                if test_m["accuracy"] >= self.config.optim.grok_test_acc:
+                    grok_streak += 1
+                else:
+                    grok_streak = 0
+
             if should_snapshot(epoch, snap) or event:
                 self.save_checkpoint(f"step_{epoch}")
+
+            if self.config.optim.stop_on_grok and grok_streak >= self.config.optim.grok_patience:
+                self.save_checkpoint(f"grokked_step_{epoch}")
+                print(
+                    f"grokked: test_acc >= {self.config.optim.grok_test_acc} for "
+                    f"{self.config.optim.grok_patience} evals -- stopping at epoch {epoch}",
+                    flush=True,
+                )
+                break
         return metrics
 
     def _evaluate(self, tokens: torch.Tensor, targets: torch.Tensor) -> dict:

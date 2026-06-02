@@ -135,3 +135,27 @@ def test_logs_weight_norm(tmp_path, monkeypatch):
     final = trainer.fit()
     assert "weight_norm" in final
     assert final["weight_norm"] > 0
+
+
+def test_stop_on_grok_halts_before_max_epochs(tmp_path, monkeypatch):
+    # With early-stop on and a trivially-reached threshold, training halts well
+    # before the epoch cap and saves a grokked checkpoint.
+    monkeypatch.chdir(tmp_path)
+    config = _config(group="C4", train_frac=0.75, weight_decay=0.0, epochs=400, log_every=1)
+    config.optim.stop_on_grok = True
+    config.optim.grok_test_acc = 0.01  # exercises the early-stop path deterministically
+    config.optim.grok_patience = 2
+    trainer = GroupGrokkingTrainer.from_config(config)
+    trainer.fit()
+    assert trainer.current_epoch < 399  # stopped early
+    assert list((trainer.run_dir / "checkpoints").glob("grokked_step_*.pt"))
+
+
+def test_no_early_stop_runs_full_budget(tmp_path, monkeypatch):
+    # Default (stop_on_grok=False) must run every epoch even if test_acc is high.
+    monkeypatch.chdir(tmp_path)
+    trainer = GroupGrokkingTrainer.from_config(
+        _config(group="C4", train_frac=0.75, weight_decay=0.0, epochs=20, log_every=1)
+    )
+    trainer.fit()
+    assert trainer.current_epoch == 19

@@ -38,6 +38,10 @@ class OptimConfig(BaseModel):
     full_batch: bool = True
     log_every: int = Field(1, gt=0)  # evaluate + log metrics every N epochs
     print_every: int = Field(1000, gt=0)  # print a console progress line every N epochs
+    # Early stop once generalization is reached. Always bounded by `epochs`.
+    stop_on_grok: bool = False
+    grok_test_acc: float = Field(0.99, gt=0.0, le=1.0)  # test-acc threshold counted as grokked
+    grok_patience: int = Field(5, gt=0)  # consecutive evals above threshold before stopping
 
     @field_validator("betas")
     @classmethod

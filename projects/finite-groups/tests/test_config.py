@@ -89,6 +89,17 @@ def test_print_every_default_and_positive():
         OptimConfig(print_every=0)
 
 
+def test_grok_early_stop_defaults_and_validation():
+    cfg = GrokkingConfig(experiment=_experiment())
+    assert cfg.optim.stop_on_grok is False  # opt-in
+    assert cfg.optim.grok_test_acc == 0.99
+    assert cfg.optim.grok_patience == 5
+    with pytest.raises(ValidationError):
+        OptimConfig(grok_test_acc=1.5)  # must be <= 1
+    with pytest.raises(ValidationError):
+        OptimConfig(grok_patience=0)
+
+
 def test_betas_default_and_validation():
     # beta2=0.98 is the modular-addition default that damps slingshot loss spikes.
     cfg = GrokkingConfig(experiment=_experiment())
