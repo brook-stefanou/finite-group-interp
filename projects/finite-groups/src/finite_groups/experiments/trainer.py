@@ -104,6 +104,14 @@ class GroupGrokkingTrainer(BaseTrainer):
                 }
                 self.log(metrics, step=epoch)
 
+                if epoch % self.config.optim.print_every == 0 or epoch == last_epoch:
+                    print(
+                        f"[{epoch:>6}/{self.config.optim.epochs}] "
+                        f"train loss={metrics['train_loss']:.4f} acc={metrics['train_acc']:.3f} | "
+                        f"test loss={metrics['test_loss']:.4f} acc={metrics['test_acc']:.3f}",
+                        flush=True,
+                    )
+
                 # Snapshot densely when the test loss drops sharply
                 if snap.event_based and prev_test_loss < float("inf"):
                     rel_drop = (prev_test_loss - test_m["loss"]) / prev_test_loss

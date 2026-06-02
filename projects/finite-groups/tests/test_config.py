@@ -82,6 +82,13 @@ def test_log_every_default_and_positive():
         OptimConfig(log_every=0)
 
 
+def test_print_every_default_and_positive():
+    cfg = GrokkingConfig(experiment=_experiment())
+    assert cfg.optim.print_every == 1000
+    with pytest.raises(ValidationError):
+        OptimConfig(print_every=0)
+
+
 def test_snapshot_event_fields():
     cfg = GrokkingConfig(experiment=_experiment())
     assert cfg.snapshot.event_based is True
@@ -94,3 +101,4 @@ def test_experiment_reproducibility_defaults():
     exp = _experiment()
     assert exp.device == "cpu"  # reproducible + fast for small models
     assert exp.deterministic is True
+    assert exp.use_wandb is True  # tracking on by default; tests/CI disable via WANDB_MODE

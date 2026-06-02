@@ -34,6 +34,7 @@ class OptimConfig(BaseModel):
     epochs: int = Field(10_000, gt=0)
     full_batch: bool = True
     log_every: int = Field(1, gt=0)  # evaluate + log metrics every N epochs
+    print_every: int = Field(1000, gt=0)  # print a console progress line every N epochs
 
 
 class SnapshotConfig(BaseModel):
