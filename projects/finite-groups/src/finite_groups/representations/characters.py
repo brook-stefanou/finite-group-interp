@@ -1,9 +1,10 @@
 import numpy as np
 
 from finite_groups import FiniteGroup
+from finite_groups.group import Element
 
 
-def compute_character_table(group) -> tuple[np.ndarray, list]:
+def compute_character_table(group: FiniteGroup) -> tuple[np.ndarray, list[list[Element]]]:
     classes = group.conjugacy_classes()
     k = len(classes)
     n = group.order
@@ -65,18 +66,20 @@ def compute_character_table(group) -> tuple[np.ndarray, list]:
     return clean_table(final_table), classes
 
 
-def clean_table(table, decimals=5):
+def clean_table(table: np.ndarray, decimals: int = 5) -> np.ndarray:
     table = np.where(np.abs(np.imag(table)) < 1e-10, np.real(table), table)
     return np.round(table, decimals)
 
 
-def decompose_character(reducible_phi: np.ndarray, group: FiniteGroup) -> tuple[dict, np.ndarray]:
+def decompose_character(
+    reducible_phi: np.ndarray, group: FiniteGroup
+) -> tuple[dict[int, int], np.ndarray]:
     # get necessary data out of the group
     table, classes = compute_character_table(group)
     order = group.order
     class_sizes = np.array([len(c) for c in classes])
 
-    multiplicities = {}
+    multiplicities: dict[int, int] = {}
 
     # Compute multiplicities using Shur's orthogonality
     for i, chi_i in enumerate(table):

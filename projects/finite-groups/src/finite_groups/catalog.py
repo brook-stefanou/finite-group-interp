@@ -281,18 +281,18 @@ def all_groups(max_order: int = 19) -> list[GroupEntry]:
     return [e for gid, e in sorted(CATALOG.items()) if gid[0] <= max_order]
 
 
-def build_from_id(gap_id) -> FiniteGroup:
+def build_from_id(gap_id: tuple[int, int] | str) -> FiniteGroup:
     """Build a group from its GAP id, given as a ``(order, index)`` tuple or an
     ``"order,index"`` string."""
     if isinstance(gap_id, str):
         order_str, index_str = gap_id.split(",")
-        gap_id = (int(order_str), int(index_str))
+        key = (int(order_str), int(index_str))
     else:
-        gap_id = tuple(gap_id)
+        key = (gap_id[0], gap_id[1])
 
-    if gap_id not in CATALOG:
-        raise KeyError(f"No group with GAP id {gap_id} in the catalog")
-    return CATALOG[gap_id].build()
+    if key not in CATALOG:
+        raise KeyError(f"No group with GAP id {key} in the catalog")
+    return CATALOG[key].build()
 
 
 def resolve_group(spec: str) -> FiniteGroup:

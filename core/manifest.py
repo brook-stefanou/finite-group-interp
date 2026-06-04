@@ -4,6 +4,7 @@ import platform
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import torch
 from omegaconf import OmegaConf
@@ -66,7 +67,7 @@ def create_run_dir(run_id: str) -> Path:
     return run_dir
 
 
-def create_manifest(config: BaseConfig, run_dir: Path) -> dict:
+def create_manifest(config: BaseConfig, run_dir: Path) -> dict[str, Any]:
     run_id = run_dir.name
     config_hash = compute_config_hash(config)
     # Record the configured device (what the run used) and whether torch
@@ -100,7 +101,7 @@ def create_manifest(config: BaseConfig, run_dir: Path) -> dict:
 def update_manifest(
     run_dir: Path,
     status: str,
-    final_metrics: dict | None = None,
+    final_metrics: dict[str, float] | None = None,
     error: str | None = None,
 ) -> None:
     manifest_path = run_dir / "manifest.json"

@@ -1,13 +1,15 @@
 import numpy as np
 
-from .group import FiniteGroup
+from collections.abc import Callable
+
+from .group import Element, FiniteGroup
 
 
 class GroupGenerators:
     @staticmethod
     def cyclic_group(n: int) -> FiniteGroup:
         # Generates the Cyclic group C_n
-        elements = [f"z{i}" for i in range(n)]
+        elements: list[Element] = [f"z{i}" for i in range(n)]
 
         range_arr = np.arange(n)
         table = (range_arr + range_arr[:, None]) % n
@@ -15,14 +17,14 @@ class GroupGenerators:
         return FiniteGroup(elements=elements, cayley_table=table)
 
     @classmethod
-    def symmetric_group(cls, n: int):
+    def symmetric_group(cls, n: int) -> FiniteGroup:
         """Generates S_n of order n! without itertools."""
 
         # Recursive helper to find all permutations
-        def get_permutations(arr):
+        def get_permutations(arr: list[int]) -> list[list[int]]:
             if len(arr) == 0:
                 return [[]]
-            res = []
+            res: list[list[int]] = []
             for i in range(len(arr)):
                 rest = arr[:i] + arr[i + 1 :]
                 for p in get_permutations(rest):
@@ -45,17 +47,17 @@ class GroupGenerators:
                 res = tuple(p1[p2[k]] for k in range(n))
                 table[i, j] = perm_to_idx[res]
 
-        str_elements = ["".join(map(str, p)) for p in elements_tuples]
+        str_elements: list[Element] = ["".join(map(str, p)) for p in elements_tuples]
         return FiniteGroup(elements=str_elements, cayley_table=table)
 
     @classmethod
-    def direct_product(cls, group_a, group_b):
+    def direct_product(cls, group_a: FiniteGroup, group_b: FiniteGroup) -> FiniteGroup:
         """Combines two FiniteGroups without itertools."""
         n_a, n_b = group_a.order, group_b.order
         new_order = n_a * n_b
 
         # Build element names manually
-        new_elements = []
+        new_elements: list[Element] = []
         for a_name in group_a.elements:
             for b_name in group_b.elements:
                 new_elements.append(f"({a_name},{b_name})")
@@ -79,7 +81,7 @@ class GroupGenerators:
         return FiniteGroup(elements=new_elements, cayley_table=table)
 
     @classmethod
-    def dihedral_group(cls, n: int):
+    def dihedral_group(cls, n: int) -> FiniteGroup:
         """Generates D_n of order 2n."""
         # Elements: (reflection, rotation) where reflection is 0 or 1
         elements_data = []
@@ -109,7 +111,7 @@ class GroupGenerators:
                 table[i, j] = res_s * n + res_r
 
         # Friendly names: e, r, r2... s, sr, sr2...
-        names = []
+        names: list[Element] = []
         for s, r in elements_data:
             prefix = "s" if s == 1 else ""
             suffix = f"r{r}" if r > 0 else ("e" if s == 0 else "")
@@ -118,7 +120,12 @@ class GroupGenerators:
         return FiniteGroup(elements=names, cayley_table=table)
 
     @classmethod
-    def semidirect_product(cls, normal, acting, action):
+    def semidirect_product(
+        cls,
+        normal: FiniteGroup,
+        acting: FiniteGroup,
+        action: Callable[[Element, Element], Element],
+    ) -> FiniteGroup:
         """Builds the semidirect product N (x) H of `normal` by `acting`.
 
         `action(h, n)` is the automorphism phi_h applied to n: it takes an
@@ -154,7 +161,7 @@ class GroupGenerators:
                         )
 
         new_order = n_N * n_H
-        new_elements = []
+        new_elements: list[Element] = []
         for n_name in normal.elements:
             for h_name in acting.elements:
                 new_elements.append(f"({n_name},{h_name})")

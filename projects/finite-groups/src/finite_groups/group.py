@@ -1,12 +1,19 @@
+from collections.abc import Hashable
+
 import numpy as np
 from pydantic import BaseModel, ConfigDict, PrivateAttr, field_validator, model_validator
+
+# Group elements are opaque labels (strings in the catalog, ints/tuples in
+# tests); all the structure lives in the Cayley table. Hashable is the one
+# real requirement -- elements are used as dict keys for index lookups.
+Element = Hashable
 
 
 class FiniteGroup(BaseModel):
     # Pydantic has no native numpy support, so allow arbitrary types for the table.
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    elements: list
+    elements: list[Element]
     cayley_table: np.ndarray
 
     # Cached identity index, populated during validation.
@@ -43,26 +50,26 @@ class FiniteGroup(BaseModel):
         self._validate_group_axioms()
         return self
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, FiniteGroup):
             return False
         return self.elements == other.elements and np.array_equal(
             self.cayley_table, other.cayley_table
         )
 
-    def el_to_inx(self, g):
+    def el_to_inx(self, g: Element) -> int:
         return {el: inx for inx, el in enumerate(self.elements)}[g]
 
-    def multiply(self, g, h):
+    def multiply(self, g: Element, h: Element) -> Element:
         element_inx = {el: inx for inx, el in enumerate(self.elements)}
         g_inx = element_inx[g]
         h_inx = element_inx[h]
-        return self.elements[self.cayley_table[g_inx][h_inx]]
+        return self.elements[int(self.cayley_table[g_inx, h_inx])]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Group(elements = {self.elements}, order = {self.order})"
 
-    def _validate_group_axioms(self):
+    def _validate_group_axioms(self) -> bool:
         # Validates identity, inverse and associativity
         self._identity_index = self._check_identity()
         self._check_inverses(self._identity_index)
@@ -108,7 +115,7 @@ class FiniteGroup(BaseModel):
 
         return int(possible_identities[0])
 
-    def _check_inverses(self, identity_index: int):
+    def _check_inverses(self, identity_index: int) -> bool:
         # Verifies that every element has an inverse
         # Condition: The identity must appear exactly once for every row
 
@@ -129,15 +136,15 @@ class FiniteGroup(BaseModel):
 
         return True
 
-    def get_inverse(self, g):
+    def get_inverse(self, g: Element) -> Element:
         for h in self.elements:
             if self.multiply(g, h) == self.elements[self._check_identity()]:
                 return h
-        return ValueError("Invalid Group: No inverse found")
+        raise ValueError("Invalid Group: No inverse found")
 
-    def conjugacy_classes(self) -> list:
-        classes = []
-        seen = set()
+    def conjugacy_classes(self) -> list[list[Element]]:
+        classes: list[list[Element]] = []
+        seen: set[Element] = set()
 
         for i, x in enumerate(self.elements):
             if x in seen:

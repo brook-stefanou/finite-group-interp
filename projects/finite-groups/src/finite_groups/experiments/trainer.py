@@ -78,11 +78,11 @@ class GroupGrokkingTrainer(BaseTrainer):
         )
         return cls(config, model, group)
 
-    def train_loop(self):
+    def train_loop(self) -> dict[str, float]:
         snap = self.config.snapshot
         last_epoch = self.config.optim.epochs - 1
         prev_test_loss = float("inf")
-        metrics = {}
+        metrics: dict[str, float] = {}
         grok_streak = 0  # consecutive evals with test_acc above the grok threshold
 
         for epoch in range(self.config.optim.epochs):
@@ -91,7 +91,7 @@ class GroupGrokkingTrainer(BaseTrainer):
             logits = self.model(self.train_tokens)
             readout = logits[:, -1, :]  # the '=' position
             loss = F.cross_entropy(readout, self.train_targets)
-            loss.backward()
+            torch.autograd.backward(loss)
             self.optimizer.step()
 
             event = False
@@ -101,7 +101,10 @@ class GroupGrokkingTrainer(BaseTrainer):
                 # Total L2 norm of all weights -- the grokking "progress measure":
                 # weight decay drives this down, and generalization tracks it.
                 weight_norm = (
-                    sum(p.detach().pow(2).sum() for p in self.model.parameters()).sqrt().item()
+                    torch.stack([p.detach().pow(2).sum() for p in self.model.parameters()])
+                    .sum()
+                    .sqrt()
+                    .item()
                 )
                 metrics = {
                     "train_loss": loss.item(),
@@ -144,7 +147,7 @@ class GroupGrokkingTrainer(BaseTrainer):
                 break
         return metrics
 
-    def _evaluate(self, tokens: torch.Tensor, targets: torch.Tensor) -> dict:
+    def _evaluate(self, tokens: torch.Tensor, targets: torch.Tensor) -> dict[str, float]:
         with torch.no_grad():
             logits = self.model(tokens)
             readout = logits[:, -1, :]

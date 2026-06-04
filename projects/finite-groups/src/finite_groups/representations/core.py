@@ -3,7 +3,7 @@ import cmath
 import numpy as np
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from finite_groups.group import FiniteGroup
+from finite_groups.group import Element, FiniteGroup
 
 
 class Representation(BaseModel):
@@ -12,11 +12,11 @@ class Representation(BaseModel):
 
     group: FiniteGroup
     # Maps group elements to their representing matrices (numpy arrays).
-    map: dict[object, np.ndarray]
+    map: dict[Element, np.ndarray]
 
     @property
     def degree(self) -> int:
-        return next(iter(self.map.values())).shape[0]
+        return int(next(iter(self.map.values())).shape[0])
 
     @model_validator(mode="after")
     def _validate(self) -> "Representation":
@@ -41,9 +41,9 @@ class Representation(BaseModel):
                     )
         return self
 
-    def character(self):
+    def character(self) -> dict[Element, complex]:
         # Returns the character of the representation as a class function
-        return {g: m.trace() for g, m in self.map.items()}
+        return {g: complex(m.trace()) for g, m in self.map.items()}
 
     def is_irreducible(self) -> bool:
         # Uses Schur's lemma
@@ -58,7 +58,7 @@ class Representation(BaseModel):
     @classmethod
     def regular(cls, group: FiniteGroup) -> "Representation":
         # Method to create the regular representation of g
-        matrix_mapping = {}
+        matrix_mapping: dict[Element, np.ndarray] = {}
         n = group.order
         # The matrix represents a linear transformation on a vector space
         # with basis {e_g: g in G}, so each group element mapped to a basis vector index

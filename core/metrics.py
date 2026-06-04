@@ -16,7 +16,7 @@ def compute_accuracy(outputs: torch.Tensor, targets: torch.Tensor) -> float:
 
 
 @torch.no_grad()
-def compute_calibration_stats(probs: torch.Tensor, targets: torch.Tensor) -> dict:
+def compute_calibration_stats(probs: torch.Tensor, targets: torch.Tensor) -> dict[str, float]:
     # Basic calibration diagnostics
     preds = probs.argmax(dim=-1)
     max_probs = probs.max(dim=-1).values

@@ -17,7 +17,7 @@ class IsotypicBlock:
 
     projector: np.ndarray
     dimension: int  # the (common) dimension d_i of the irrep(s) in this block
-    irrep_indices: tuple  # row indices into the character table this block covers
+    irrep_indices: tuple[int, ...]  # row indices into the character table this block covers
 
 
 def isotypic_projectors(group: FiniteGroup) -> list[np.ndarray]:

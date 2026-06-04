@@ -2,6 +2,7 @@ import random
 import sys
 import traceback
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import torch
@@ -9,6 +10,9 @@ import torch
 from .config_schema import BaseConfig
 from .logging_jsonl import JSONLLogger
 from .manifest import create_manifest, create_run_dir, update_manifest, save_resolved_config
+
+if TYPE_CHECKING:
+    from wandb.sdk.wandb_run import Run
 
 
 def set_seed(seed: int) -> None:
@@ -52,7 +56,7 @@ class BaseTrainer:
         self.jsonl_logger = JSONLLogger(self.run_dir / "metrics.jsonl")
 
         # Optional W&B logger initialization
-        self.wandb_run = None
+        self.wandb_run: Run | None = None
         if self.config.experiment.use_wandb:
             self._init_wandb()
 
@@ -72,10 +76,10 @@ class BaseTrainer:
                 "Warning: use_wandb=True but 'wandb' package is not installed. Logging locally only."
             )
 
-    def log(self, metrics: dict, step: int | None = None) -> None:
+    def log(self, metrics: dict[str, float], step: int | None = None) -> None:
         """Log metrics to both JSONL and W&B."""
         # Log locally
-        log_entry = {"step": step} if step is not None else {}
+        log_entry: dict[str, Any] = {"step": step} if step is not None else {}
         log_entry.update(metrics)
         self.jsonl_logger.log(log_entry)
 
@@ -85,7 +89,7 @@ class BaseTrainer:
 
             wandb.log(metrics, step=step)
 
-    def save_checkpoint(self, name: str, metadata: dict | None = None) -> Path:
+    def save_checkpoint(self, name: str, metadata: dict[str, Any] | None = None) -> Path:
         """Saves a PyTorch state dict checkpoint to the run directory."""
         checkpoint_dir = self.run_dir / "checkpoints"
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -102,7 +106,7 @@ class BaseTrainer:
         torch.save(checkpoint_payload, checkpoint_path)
         return checkpoint_path
 
-    def fit(self) -> dict:
+    def fit(self) -> dict[str, float]:
         """Main training lifecycle wrapper with safety context."""
         create_manifest(self.config, self.run_dir)
         save_resolved_config(self.config, self.run_dir)
@@ -124,9 +128,7 @@ class BaseTrainer:
 
             # Log to W&B
             if self.wandb_run is not None:
-                import wandb
-
-                wandb.alert(
+                self.wandb_run.alert(
                     title="Run Failed", text=f"Run {self.run_id} failed with error: {str(e)}"
                 )
 
@@ -134,7 +136,7 @@ class BaseTrainer:
         finally:
             self.close()
 
-    def train_loop(self) -> dict:
+    def train_loop(self) -> dict[str, float]:
         """Abstract training loop. Override this in child projects."""
         raise NotImplementedError("Subclasses must implement train_loop()")
 
@@ -144,7 +146,7 @@ class BaseTrainer:
         """Called before training starts."""
         pass
 
-    def on_train_end(self, final_metrics: dict) -> None:
+    def on_train_end(self, final_metrics: dict[str, float]) -> None:
         """Called after training finishes successfully."""
         pass
 
@@ -152,7 +154,7 @@ class BaseTrainer:
         """Called at the beginning of each epoch."""
         pass
 
-    def on_epoch_end(self, epoch: int, epoch_metrics: dict) -> None:
+    def on_epoch_end(self, epoch: int, epoch_metrics: dict[str, float]) -> None:
         """Called at the end of each epoch."""
         pass
 
@@ -160,7 +162,7 @@ class BaseTrainer:
         """Called at the beginning of each batch/step."""
         pass
 
-    def on_step_end(self, step: int, step_metrics: dict) -> None:
+    def on_step_end(self, step: int, step_metrics: dict[str, float]) -> None:
         """Called at the end of each batch/step."""
         pass
 

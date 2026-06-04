@@ -12,10 +12,11 @@ word that equals the identity, e.g. ``"aaa"`` for ``a^3 = e``.
 
 import re
 from collections import deque
+from collections.abc import Callable
 
 import numpy as np
 
-from finite_groups.group import FiniteGroup
+from finite_groups.group import Element, FiniteGroup
 
 
 def _parse_symbols(generators: str) -> dict[str, int]:
@@ -66,7 +67,7 @@ def from_presentation(generators: str, relations: list[str], max_order: int = 20
         table[c][x] = d
         table[d][_inv(x)] = c
 
-    def union(a: int, b: int, queue: deque) -> None:
+    def union(a: int, b: int, queue: deque[int]) -> None:
         a, b = find(a), find(b)
         if a == b:
             return
@@ -76,7 +77,7 @@ def from_presentation(generators: str, relations: list[str], max_order: int = 20
         queue.append(b)
 
     def coincidence(a: int, b: int) -> None:
-        queue: deque = deque()
+        queue: deque[int] = deque()
         union(a, b, queue)
         while queue:
             dead = queue.popleft()
@@ -136,7 +137,12 @@ def from_presentation(generators: str, relations: list[str], max_order: int = 20
     return _build_group(generators, table, find, n_symbols)
 
 
-def _build_group(generators, table, find, n_symbols) -> FiniteGroup:
+def _build_group(
+    generators: str,
+    table: list[list[int]],
+    find: Callable[[int], int],
+    n_symbols: int,
+) -> FiniteGroup:
     # Collect live cosets and renumber them 0..m-1 (identity coset 1 -> index 0).
     live = [c for c in range(1, len(table)) if find(c) == c]
     index_of = {c: i for i, c in enumerate(live)}
@@ -161,22 +167,32 @@ def _build_group(generators, table, find, n_symbols) -> FiniteGroup:
     bfs = deque([identity])
     while bfs:
         c = bfs.popleft()
+        word_c = word_of[c]
+        assert word_c is not None  # BFS only enqueues cosets whose word is set
         for x in range(n_symbols):
             nxt = action[c, x]
             if word_of[nxt] is None:
-                word_of[nxt] = word_of[c] + [x]
+                word_of[nxt] = word_c + [x]
                 bfs.append(nxt)
+
+    # The action of a group on its cosets is transitive, so BFS must reach
+    # every live coset; a gap here means the table above is not a group.
+    words: list[list[int]] = []
+    for i, w in enumerate(word_of):
+        if w is None:
+            raise ValueError(f"Coset {i} unreachable from identity; coset table is inconsistent")
+        words.append(w)
 
     # Right-multiplication by element d = following d's word from coset c.
     cayley = np.zeros((m, m), dtype=np.int64)
     for c in range(m):
         for d in range(m):
             here = c
-            for x in word_of[d]:
+            for x in words[d]:
                 here = action[here, x]
             cayley[c, d] = here
 
-    elements = [_word_to_name(word_of[i], generators) for i in range(m)]
+    elements: list[Element] = [_word_to_name(words[i], generators) for i in range(m)]
     return FiniteGroup(elements=elements, cayley_table=cayley)
 
 
@@ -216,7 +232,7 @@ def build_group(spec: str) -> FiniteGroup:
 def _word_to_name(word: list[int], generators: str) -> str:
     if not word:
         return "e"
-    chars = []
+    chars: list[str] = []
     for symbol in word:
         gen = generators[symbol // 2]
         chars.append(gen if symbol % 2 == 0 else gen.upper())
