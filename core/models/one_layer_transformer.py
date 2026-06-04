@@ -65,6 +65,13 @@ class OneLayerTransformer(nn.Module):
         }
         self.activation = activations[activation]
 
+        # Causal mask: True above the diagonal (key_pos > query_pos) marks the
+        # future positions each query is forbidden from attending to.
+        self.register_buffer(
+            "causal_mask",
+            torch.triu(torch.ones(n_ctx, n_ctx, dtype=torch.bool), diagonal=1),
+        )
+
     def forward(self, tokens: torch.Tensor) -> torch.Tensor:
         # tokens: [batch, n_ctx] int64 ids; returns logits [batch, n_ctx, d_vocab_out]
         resid = self.W_E[tokens] + self.W_pos
@@ -83,6 +90,7 @@ class OneLayerTransformer(nn.Module):
             "batch head query_pos d_head, batch head key_pos d_head -> batch head query_pos key_pos",
         )
         attn_scores = attn_scores / (self.d_head**0.5)
+        attn_scores = attn_scores.masked_fill(self.causal_mask, float("-inf"))
         pattern = torch.softmax(attn_scores, dim=-1)
         z = einops.einsum(
             pattern,
@@ -94,13 +102,14 @@ class OneLayerTransformer(nn.Module):
         )
         resid = resid + attn_out
         if self.use_mlp:
-            resid = einops.einsum(
+            mlp_pre = einops.einsum(
                 resid, self.W_in, "batch pos d_model, d_model d_mlp -> batch pos d_mlp"
             )
-            resid = self.activation(resid)
-            resid = einops.einsum(
-                resid, self.W_out, "batch pos d_mlp, d_mlp d_model -> batch pos d_model"
+            mlp_pre = self.activation(mlp_pre)
+            mlp_out = einops.einsum(
+                mlp_pre, self.W_out, "batch pos d_mlp, d_mlp d_model -> batch pos d_model"
             )
+            resid = resid + mlp_out
         logits = einops.einsum(
             resid, self.W_U, "batch pos d_model, d_model vocab_out -> batch pos vocab_out"
         )
