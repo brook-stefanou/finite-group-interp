@@ -1,0 +1,37 @@
+# Pre-commit mirrors the CI gates (ruff, mypy) plus cheap hygiene checks.
+# ruff/mypy run as local hooks through `uv run` so they use the exact versions
+# in uv.lock -- an isolated-env mypy hook would miss the pydantic plugin and
+# torch/numpy types and silently check less than CI does.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: check-added-large-files # guards against stray checkpoints/run artifacts
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.7.13
+    hooks:
+      - id: uv-lock # keep uv.lock in sync with pyproject.toml
+
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+      - id: mypy
+        name: mypy (strict)
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: false # always check the configured targets as a whole
