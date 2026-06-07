@@ -25,6 +25,25 @@ finite-group-interp/
 └── runs/                   # local run artifacts (gitignored)
 ```
 
+How data flows through the pipeline — every artifact traceable back to a config and a commit:
+
+```
+config (CLI dotlist → validated Pydantic schema)
+   │
+   ▼
+scripts/run.py ── trainer ──► runs/<date>/<run_id>/
+                                ├── manifest.json      provenance: git hash, config hash, env
+                                ├── metrics.jsonl      training curves, every eval
+                                └── checkpoints/*.pt   event-dense weight snapshots,
+                                       │               full config embedded in each
+                                       ▼
+scripts/analyze_run.py ──────► runs/<run_id>/analysis/
+                                ├── metrics.json       every reported number + provenance
+                                └── figures/*.png ───► docs/figures/ ───► reports/*.md
+                                                       (published)       (hand-written around
+                                                                          generated artifacts)
+```
+
 ---
 
 ## The Research Question
@@ -39,6 +58,8 @@ The published evidence on both sides is **character-level** (correlations betwee
 * **Pipeline validated at scale.** C₁₁₃ (modular addition, the canonical grokking task) groks cleanly: train_frac 0.3, 30k epochs → test accuracy **99.98%**, with the weight-norm progress measure and dense checkpoints captured through the transition.
 * **C₁₁₃ is calibration, not evidence in the debate — by construction.** 113 is prime, so C₁₁₃ has no proper subgroups: the coset hypothesis is vacuous here and cannot make a competing prediction. Replicating the known irrep/Fourier signature on this run validates the measurement tools against a known answer; only the same-character-table pairs below can adjudicate between the hypotheses.
 * **Calibration complete: the signature replicates, causally.** Three frequency blocks hold 94% of the embedding's energy (14–23× the random baseline); ablating any one costs 9–17 nats of test loss while the other 53 blocks sit at a 0.05-nat noise floor; the model restricted to just those three blocks retains 97.4% accuracy — all predicted in the [research log](docs/research-log.md) before the analysis ran. **Full write-up: [reports/01-c113-calibration.md](reports/01-c113-calibration.md).**
+
+![Isotypic energy across training: diffuse during memorisation, concentrating into three frequency blocks exactly at the grokking transition](docs/figures/c113-energy-trajectory.png)
 
 ### The designed experiment: same-character-table pairs
 
