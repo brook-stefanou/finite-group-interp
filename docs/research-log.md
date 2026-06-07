@@ -49,3 +49,5 @@
   - Dih(104) vs Dic(104)
     -Compare these with C13 ⋊ C8
   - Heisenberg group over F5 vs C25 ⋊ C5
+- Built analysis founadation: any checkpoint loads back into a model and forward_with_cache exposes all intermediates
+  - cache is recorded inside the real forward pass as a flag, not hooks (not using submodules) or a reimplmentation (activations can't drift)

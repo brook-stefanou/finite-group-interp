@@ -18,9 +18,9 @@ finite-group-interp/
 │   ├── model.py            # 1-layer transformer (from scratch, analysis-friendly)
 │   ├── task.py             # group-multiplication task + train/test split
 │   ├── training/           # trainer, config schemas, run manifests, logging
-│   └── analysis/           # mechanistic analysis of trained checkpoints (in progress)
+│   └── analysis/           # checkpoint loading + activation cache; irrep/coset metrics in progress
 ├── scripts/run.py          # experiment launcher
-├── tests/                  # 115+ tests incl. mathematical property tests
+├── tests/                  # 150 tests incl. mathematical property tests
 └── runs/                   # local run artifacts (gitignored)
 ```
 
@@ -66,8 +66,8 @@ The Chughtai/Stander disagreement is a clean instance of the central epistemic p
 
 | | |
 |---|---|
-| Done | Group algebra + representation-theory library (character tables, isotypic projectors, Todd–Coxeter); reproducible training pipeline (manifests, dual logging, event-dense checkpointing); C₁₁₃ grokking validation; order-<20 negative result |
-| Active | Checkpoint analysis tooling (`analysis/`): isotypic-energy spectra, per-block ablations, grokking-transition trajectories |
+| Done | Group algebra + representation-theory library (character tables, isotypic projectors, Todd–Coxeter); reproducible training pipeline (manifests, dual logging, event-dense checkpointing); C₁₁₃ grokking validation; order-<20 negative result; checkpoint loading + activation-cache analysis API (`analysis/`) |
+| Active | Irrep-level analysis of the grokked C₁₁₃ run: isotypic-energy spectra, per-block ablations, grokking-transition trajectories |
 | Planned | Coset/subgroup-alignment metrics; the same-character-table pair experiment; FC baseline; cross-run evaluation harness |
 
 ---
