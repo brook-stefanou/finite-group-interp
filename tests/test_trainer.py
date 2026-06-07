@@ -9,7 +9,8 @@ from finite_group_interp.training.config import (
     ModelConfig,
     OptimConfig,
 )
-from finite_group_interp.training.trainer import GroupGrokkingTrainer
+from finite_group_interp.groups.catalog import resolve_group
+from finite_group_interp.training.trainer import GroupGrokkingTrainer, build_model
 
 
 def _config(group="C4", train_frac=0.8, epochs=300, weight_decay=1.0, log_every=1):
@@ -159,3 +160,25 @@ def test_no_early_stop_runs_full_budget(tmp_path, monkeypatch):
     )
     trainer.fit()
     assert trainer.current_epoch == 19
+
+
+def test_build_model_dimensions_follow_group_and_config():
+    config = GrokkingConfig(experiment=ExperimentConfig(name="t", seed=0, use_wandb=False))
+    group = resolve_group("C8")
+    m = build_model(config, group)
+    assert m.d_vocab_in == 9  # 8 elements + '='
+    assert m.d_vocab_out == 8
+    assert m.n_ctx == 3
+    assert m.d_model == config.model.d_model
+    assert m.use_mlp == config.model.use_mlp
+
+
+def test_build_model_matches_from_config_architecture(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)  # from_config creates runs/<date>/<id>/ — keep it out of the repo
+    config = GrokkingConfig(experiment=ExperimentConfig(name="t", seed=0, use_wandb=False))
+    group = resolve_group("C8")
+    built = build_model(config, group)
+    trainer = GroupGrokkingTrainer.from_config(config)
+    assert {k: tuple(v.shape) for k, v in built.state_dict().items()} == {
+        k: tuple(v.shape) for k, v in trainer.model.state_dict().items()
+    }

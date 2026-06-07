@@ -200,6 +200,24 @@ def should_snapshot(step: int, config: SnapshotConfig) -> bool:
     return step % config.interval == 0
 
 
+def build_model(config: GrokkingConfig, group: FiniteGroup) -> OneLayerTransformer:
+    """The one model-construction recipe, shared by trainer and analysis loader.
+
+    Vocab sizes derive from the group (one token per element, plus '=' on the
+    input side); architecture hyperparameters come from ``config.model``.
+    """
+    return OneLayerTransformer(
+        d_vocab_in=group.order + 1,  # group elements + '='
+        d_vocab_out=group.order,
+        n_ctx=3,
+        d_model=config.model.d_model,
+        n_heads=config.model.n_heads,
+        use_mlp=config.model.use_mlp,
+        d_mlp=config.model.d_mlp,
+        activation=config.model.activation,
+    )
+
+
 class GroupGrokkingTrainer(BaseTrainer):
     config: GrokkingConfig
 
@@ -241,16 +259,7 @@ class GroupGrokkingTrainer(BaseTrainer):
     def from_config(cls, config: GrokkingConfig) -> "GroupGrokkingTrainer":
         set_seed(config.experiment.seed)  # seed before model init so weights are reproducible
         group = resolve_group(config.data.group)
-        model = OneLayerTransformer(
-            d_vocab_in=group.order + 1,  # group elements + '='
-            d_vocab_out=group.order,
-            n_ctx=3,
-            d_model=config.model.d_model,
-            n_heads=config.model.n_heads,
-            use_mlp=config.model.use_mlp,
-            d_mlp=config.model.d_mlp,
-            activation=config.model.activation,
-        )
+        model = build_model(config, group)
         return cls(config, model, group)
 
     def train_loop(self) -> dict[str, float]:
