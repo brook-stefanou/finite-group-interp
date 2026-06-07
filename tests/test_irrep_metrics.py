@@ -71,8 +71,12 @@ def test_planted_mixture_ratios_recovered():
     a /= np.linalg.norm(a)
     b /= np.linalg.norm(b)
     spec = isotypic_energy(3.0 * a + 1.0 * b, blocks)  # orthogonal blocks: 9:1 energy
-    assert spec.fractions[1] == pytest.approx(0.9, abs=1e-6)
-    assert spec.fractions[2] == pytest.approx(0.1, abs=1e-6)
+    # 1e-4 not 1e-6: projector idempotency noise is platform-dependent (BLAS),
+    # and CI's leakage (~4e-6) exceeded 1e-6 where local runs passed. Same
+    # rationale as the sum-to-1 tolerance above; the 9:1 distinction under
+    # test is 1e-1-scale.
+    assert spec.fractions[1] == pytest.approx(0.9, abs=1e-4)
+    assert spec.fractions[2] == pytest.approx(0.1, abs=1e-4)
 
 
 def test_baseline_is_block_dims_over_group_order():
