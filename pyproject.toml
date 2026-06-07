@@ -12,6 +12,7 @@ dependencies = [
     "wandb>=0.15.0",
     "sympy>=1.12",
     "einops>=0.8.2",
+    "matplotlib>=3.8",
 ]
 
 [dependency-groups]
