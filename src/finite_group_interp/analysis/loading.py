@@ -65,11 +65,16 @@ def load_checkpoint(path: Path | str) -> LoadedCheckpoint:
 _STEP_RE = re.compile(r"(\d+)$")
 
 
-def _step_of(path: Path) -> int:
+def step_of(path: Path) -> int:
+    """Parse the trailing step number from a checkpoint path stem."""
     match = _STEP_RE.search(path.stem)
     if match is None:
         raise ValueError(f"cannot parse a step number from checkpoint filename: {path.name}")
     return int(match.group(1))
+
+
+# Private alias kept for backward compatibility (internal use only).
+_step_of = step_of
 
 
 def list_checkpoints(run_dir: Path | str) -> list[Path]:
