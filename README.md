@@ -19,8 +19,9 @@ finite-group-interp/
 │   ├── task.py             # group-multiplication task + train/test split
 │   ├── training/           # trainer, config schemas, run manifests, logging
 │   └── analysis/           # checkpoint loading + activation cache; irrep/coset metrics in progress
-├── scripts/run.py          # experiment launcher
-├── tests/                  # 150 tests incl. mathematical property tests
+├── scripts/                # run.py (training), analyze_run.py (irrep analysis)
+├── reports/                # committed research write-ups
+├── tests/                  # 180+ tests incl. mathematical property tests
 └── runs/                   # local run artifacts (gitignored)
 ```
 
@@ -37,6 +38,7 @@ The published evidence on both sides is **character-level** (correlations betwee
 * **Groups of order < 20 do not generalise.** Across S₃, Q₈, A₄, C₈ × weight-decay sweeps (150k epochs), every model memorised the training set quickly and stayed at chance test accuracy. The dataset is the bottleneck (|G|² ≤ 361 examples), not optimisation — so small groups are learning a lookup table, not the group operation, and any "algorithm" read off them would be an artefact. The investigation therefore runs on groups of order ≈ 100–350.
 * **Pipeline validated at scale.** C₁₁₃ (modular addition, the canonical grokking task) groks cleanly: train_frac 0.3, 30k epochs → test accuracy **99.98%**, with the weight-norm progress measure and dense checkpoints captured through the transition.
 * **C₁₁₃ is calibration, not evidence in the debate — by construction.** 113 is prime, so C₁₁₃ has no proper subgroups: the coset hypothesis is vacuous here and cannot make a competing prediction. Replicating the known irrep/Fourier signature on this run validates the measurement tools against a known answer; only the same-character-table pairs below can adjudicate between the hypotheses.
+* **Calibration complete: the signature replicates, causally.** Three frequency blocks hold 94% of the embedding's energy (14–23× the random baseline); ablating any one costs 9–17 nats of test loss while the other 53 blocks sit at a 0.05-nat noise floor; the model restricted to just those three blocks retains 97.4% accuracy — all predicted in the [research log](docs/research-log.md) before the analysis ran. **Full write-up: [reports/01-c113-calibration.md](reports/01-c113-calibration.md).**
 
 ### The designed experiment: same-character-table pairs
 
@@ -67,8 +69,8 @@ The Chughtai/Stander disagreement is a clean instance of the central epistemic p
 
 | | |
 |---|---|
-| Done | Group algebra + representation-theory library (character tables, isotypic projectors, Todd–Coxeter); reproducible training pipeline (manifests, dual logging, event-dense checkpointing); C₁₁₃ grokking validation; order-<20 negative result; checkpoint loading + activation-cache analysis API (`analysis/`) |
-| Active | Irrep-level analysis of the grokked C₁₁₃ run: isotypic-energy spectra, per-block ablations, grokking-transition trajectories |
+| Done | Group algebra + representation-theory library (character tables, isotypic projectors, Todd–Coxeter); reproducible training pipeline (manifests, dual logging, event-dense checkpointing); C₁₁₃ grokking validation; order-<20 negative result; checkpoint loading + activation-cache analysis API; irrep analysis of the grokked C₁₁₃ run ([report](reports/01-c113-calibration.md)) |
+| Active | Representation-product functional-form fit (irrep matrices from the regular representation — the matrix-level instrument the pair experiment needs) |
 | Planned | Coset/subgroup-alignment metrics; the same-character-table pair experiment; FC baseline; cross-run evaluation harness |
 
 ---
@@ -77,10 +79,15 @@ The Chughtai/Stander disagreement is a clean instance of the central epistemic p
 
 ```bash
 uv sync
-uv run python scripts/run.py data.group=C8 optim.epochs=2000
+
+# Reproduce the C113 grokking run (~10 min on CPU, deterministic) ...
+uv run python scripts/run.py data.group=C113 data.train_frac=0.3 optim.epochs=30000
+
+# ... then run the full irrep analysis on it (energy spectra, ablations, trajectory)
+uv run python scripts/analyze_run.py runs/<date>/<run_id>
 ```
 
-Every run writes `manifest.json` (git hash, config hash, environment), `resolved_config.yaml`, `metrics.jsonl`, and weight checkpoints to `runs/<date>/<run_id>/`. Any config field can be overridden with dotted CLI args, e.g. `data.group=A4 data.train_frac=0.4 optim.weight_decay=1.0 experiment.seed=1`.
+Every run writes `manifest.json` (git hash, config hash, environment), `resolved_config.yaml`, `metrics.jsonl`, and weight checkpoints to `runs/<date>/<run_id>/`; the analysis adds `analysis/metrics.json` and figures. Any config field can be overridden with dotted CLI args, e.g. `data.train_frac=0.4 optim.weight_decay=1.0 experiment.seed=1`. (For a 5-second smoke test of the install, `data.group=C8 optim.epochs=200` works — but note the order-<20 finding above: groups that small memorise rather than generalise.)
 
 ---
 
