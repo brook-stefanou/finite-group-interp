@@ -221,7 +221,8 @@ def test_real_grokked_c113_run_loads_and_generalises():
     # loaded weights are the trained weights, not just the right shapes.
     cfg = ckpt.config
     task = build_group_task(ckpt.group)
-    split = train_test_split(task, cfg.data.train_frac, cfg.data.split_seed or cfg.experiment.seed)
+    split_seed = cfg.data.split_seed if cfg.data.split_seed is not None else cfg.experiment.seed
+    split = train_test_split(task, cfg.data.train_frac, split_seed)
     eq_col = np.full((len(split.test_inputs), 1), ckpt.group.order)
     tokens = torch.tensor(np.concatenate([split.test_inputs, eq_col], axis=1), dtype=torch.long)
     targets = torch.tensor(split.test_targets, dtype=torch.long)

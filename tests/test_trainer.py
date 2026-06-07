@@ -1,7 +1,9 @@
 import json
 
+import numpy as np
 import torch
 
+from finite_group_interp.task import build_group_task, train_test_split
 from finite_group_interp.training.config import ExperimentConfig
 from finite_group_interp.training.config import (
     DataConfig,
@@ -182,3 +184,17 @@ def test_build_model_matches_from_config_architecture(tmp_path, monkeypatch):
     assert {k: tuple(v.shape) for k, v in built.state_dict().items()} == {
         k: tuple(v.shape) for k, v in trainer.model.state_dict().items()
     }
+
+
+def test_explicit_split_seed_zero_is_respected(tmp_path, monkeypatch):
+    # split_seed=0 is a legal explicit choice; it must seed the split with 0,
+    # not silently fall back to experiment.seed (the falsy-`or` trap).
+    monkeypatch.chdir(tmp_path)
+    config = _config(group="C8")
+    config.data.split_seed = 0
+    config.experiment.seed = 123  # different from split_seed so the bug is visible
+    trainer = GroupGrokkingTrainer.from_config(config)
+
+    expected = train_test_split(build_group_task(trainer.group), config.data.train_frac, 0)
+    actual_pairs = trainer.train_tokens[:, :2].cpu().numpy()
+    assert np.array_equal(actual_pairs, expected.train_inputs)

@@ -235,11 +235,13 @@ class GroupGrokkingTrainer(BaseTrainer):
             weight_decay=self.config.optim.weight_decay,
         )
         task = build_group_task(self.group)
-        split = train_test_split(
-            task,
-            self.config.data.train_frac,
-            self.config.data.split_seed or self.config.experiment.seed,
+        # Explicit `is None` check: `or` would silently discard split_seed=0.
+        split_seed = (
+            self.config.data.split_seed
+            if self.config.data.split_seed is not None
+            else self.config.experiment.seed
         )
+        split = train_test_split(task, self.config.data.train_frac, split_seed)
 
         eq = self.group.order
 
