@@ -55,6 +55,7 @@ runs/
 
 # Private research notes (kept local; not part of the public write-up)
 notes/
+TODO.md
 
 # Weights & Biases
 wandb/
