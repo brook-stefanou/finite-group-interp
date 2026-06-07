@@ -1,6 +1,26 @@
+from typing import Literal, TypedDict, overload
+
 import einops
 import torch
 import torch.nn as nn
+
+
+class ActivationCache(TypedDict):
+    """Every intermediate of one forward pass, keyed TransformerLens-style.
+
+    ``mlp_pre``/``mlp_post`` are the d_mlp-sized activations before/after the
+    nonlinearity (None when use_mlp=False). ``resid_mid`` and ``mlp_out`` are
+    deliberately omitted as recoverable: resid_mid = embed + attn_out;
+    mlp_out = resid_final - embed - attn_out.
+    """
+
+    embed: torch.Tensor  # W_E[tokens] + W_pos      [batch, pos, d_model]
+    attn_pattern: torch.Tensor  # post-softmax      [batch, head, q_pos, k_pos]
+    attn_out: torch.Tensor  # after W_O             [batch, pos, d_model]
+    mlp_pre: torch.Tensor | None  # pre-activation  [batch, pos, d_mlp]
+    mlp_post: torch.Tensor | None  # post-activation [batch, pos, d_mlp]
+    resid_final: torch.Tensor  # final residual     [batch, pos, d_model]
+    logits: torch.Tensor  #                         [batch, pos, d_vocab_out]
 
 
 class OneLayerTransformer(nn.Module):
@@ -69,9 +89,19 @@ class OneLayerTransformer(nn.Module):
             torch.triu(torch.ones(n_ctx, n_ctx, dtype=torch.bool), diagonal=1),
         )
 
-    def forward(self, tokens: torch.Tensor) -> torch.Tensor:
-        # tokens: [batch, n_ctx] int64 ids; returns logits [batch, n_ctx, d_vocab_out]
-        resid = self.W_E[tokens] + self.W_pos
+    @overload
+    def forward(self, tokens: torch.Tensor, return_cache: Literal[False] = ...) -> torch.Tensor: ...
+
+    @overload
+    def forward(self, tokens: torch.Tensor, return_cache: Literal[True]) -> ActivationCache: ...
+
+    def forward(
+        self, tokens: torch.Tensor, return_cache: bool = False
+    ) -> torch.Tensor | ActivationCache:
+        # tokens: [batch, n_ctx] int64 ids; returns logits [batch, n_ctx, d_vocab_out],
+        # or the full ActivationCache when return_cache=True.
+        embed = self.W_E[tokens] + self.W_pos
+        resid = embed
         q = einops.einsum(
             resid, self.W_Q, "batch pos d_model, head d_model d_head -> batch head pos d_head"
         )
@@ -98,16 +128,28 @@ class OneLayerTransformer(nn.Module):
             z, self.W_O, "batch head pos d_head, head d_head d_model -> batch pos d_model"
         )
         resid = resid + attn_out
+        mlp_pre: torch.Tensor | None = None
+        mlp_post: torch.Tensor | None = None
         if self.use_mlp:
             mlp_pre = einops.einsum(
                 resid, self.W_in, "batch pos d_model, d_model d_mlp -> batch pos d_mlp"
             )
-            mlp_pre = self.activation(mlp_pre)
+            mlp_post = self.activation(mlp_pre)
             mlp_out = einops.einsum(
-                mlp_pre, self.W_out, "batch pos d_mlp, d_mlp d_model -> batch pos d_model"
+                mlp_post, self.W_out, "batch pos d_mlp, d_mlp d_model -> batch pos d_model"
             )
             resid = resid + mlp_out
         logits = einops.einsum(
             resid, self.W_U, "batch pos d_model, d_model vocab_out -> batch pos vocab_out"
         )
+        if return_cache:
+            return ActivationCache(
+                embed=embed,
+                attn_pattern=pattern,
+                attn_out=attn_out,
+                mlp_pre=mlp_pre,
+                mlp_post=mlp_post,
+                resid_final=resid,
+                logits=logits,
+            )
         return logits

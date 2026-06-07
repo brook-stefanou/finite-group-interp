@@ -1,3 +1,4 @@
+import einops
 import pytest
 import torch
 
@@ -97,3 +98,78 @@ def test_unknown_activation_raises():
             d_mlp=16,
             activation="tanh",
         )
+
+
+def test_return_cache_logits_exactly_match_plain_forward():
+    m = _model()
+    tokens = torch.randint(0, 6, (4, 3))
+    cache = m(tokens, return_cache=True)
+    assert torch.equal(cache["logits"], m(tokens))
+
+
+def test_cache_entry_shapes():
+    m = _model()  # d_model=8, n_heads=2, d_mlp=16, d_vocab_out=5, n_ctx=3
+    tokens = torch.randint(0, 6, (4, 3))
+    cache = m(tokens, return_cache=True)
+    assert cache["embed"].shape == (4, 3, 8)
+    assert cache["attn_pattern"].shape == (4, 2, 3, 3)
+    assert cache["attn_out"].shape == (4, 3, 8)
+    assert cache["mlp_pre"].shape == (4, 3, 16)
+    assert cache["mlp_post"].shape == (4, 3, 16)
+    assert cache["resid_final"].shape == (4, 3, 8)
+    assert cache["logits"].shape == (4, 3, 5)
+
+
+def test_cache_attn_pattern_is_causal_probability():
+    m = _model()
+    tokens = torch.randint(0, 6, (4, 3))
+    pattern = m(tokens, return_cache=True)["attn_pattern"]
+    assert torch.allclose(pattern.sum(dim=-1), torch.ones(4, 2, 3), atol=1e-6)
+    future = torch.triu(torch.ones(3, 3, dtype=torch.bool), diagonal=1)
+    assert torch.all(pattern[..., future] == 0)
+
+
+def test_cache_attn_pattern_produced_cached_attn_out():
+    # The cached pattern and attn_out must be mutually consistent: recomputing
+    # attention output from the cached pattern reproduces the cached attn_out.
+    m = _model()
+    tokens = torch.randint(0, 6, (4, 3))
+    cache = m(tokens, return_cache=True)
+    resid = cache["embed"]
+    v = einops.einsum(
+        resid, m.W_V, "batch pos d_model, head d_model d_head -> batch head pos d_head"
+    )
+    z = einops.einsum(
+        cache["attn_pattern"],
+        v,
+        "batch head query_pos key_pos, batch head key_pos d_head -> batch head query_pos d_head",
+    )
+    reconstructed = einops.einsum(
+        z, m.W_O, "batch head pos d_head, head d_head d_model -> batch pos d_model"
+    )
+    assert torch.allclose(reconstructed, cache["attn_out"], atol=1e-6)
+
+
+def test_cache_resid_final_reproduces_logits():
+    m = _model()
+    tokens = torch.randint(0, 6, (4, 3))
+    cache = m(tokens, return_cache=True)
+    assert torch.allclose(cache["resid_final"] @ m.W_U, cache["logits"], atol=1e-6)
+
+
+def test_cache_residual_stream_decomposes():
+    # resid_final = embed + attn_out + mlp_out, where mlp_out = mlp_post @ W_out
+    m = _model()
+    tokens = torch.randint(0, 6, (4, 3))
+    cache = m(tokens, return_cache=True)
+    reconstructed = cache["embed"] + cache["attn_out"] + cache["mlp_post"] @ m.W_out
+    assert torch.allclose(reconstructed, cache["resid_final"], atol=1e-6)
+
+
+def test_cache_without_mlp_has_none_mlp_entries():
+    m = _model(use_mlp=False)
+    tokens = torch.randint(0, 6, (4, 3))
+    cache = m(tokens, return_cache=True)
+    assert cache["mlp_pre"] is None
+    assert cache["mlp_post"] is None
+    assert torch.allclose(cache["embed"] + cache["attn_out"], cache["resid_final"], atol=1e-6)
