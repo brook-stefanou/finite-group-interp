@@ -47,4 +47,5 @@
 - Experiment design now of pairs of groups with same character tables.
   - All character level evidence can't tell the groups apart. Any difference in what the networks learn must come from sub-character structure (subgroup lattice vs irrep realization)
   - Dih(104) vs Dic(104)
+    -Compare these with C13 ⋊ C8
   - Heisenberg group over F5 vs C25 ⋊ C5

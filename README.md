@@ -41,14 +41,16 @@ The published evidence on both sides is **character-level** (correlations betwee
 
 Pairs of **non-isomorphic groups with identical character tables** make character-level evidence — the entire class of evidence the debate currently rests on — mathematically incapable of distinguishing the groups. Trained on such a pair, the hypotheses are forced apart:
 
-| Pair | Order | Dataset size | Same table because | What differs |
-|---|---|---|---|---|
-| Extraspecial 5¹⁺² (exponent 5 vs exponent 25) | 125 | 15,625 | classical result for the two non-abelian groups of order p³ | element orders {1,5} vs {1,5,25}; entirely different subgroup lattices |
-| D₄×C₁₃ vs Q₈×C₁₃ | 104 | 10,816 | product table = Kronecker product; D₄ and Q₈ share a table | 5 vs 1 involutions; non-normal subgroups vs all-normal; 2-dim irrep **real** vs **quaternionic** |
+| Pair | Order | Dataset size | What differs |
+|---|---|---|---|
+| Dih(104) vs Dic(104) | 104 | 10,816 | 53 vs 1 involutions; different subgroup lattices; 2-dim irreps **real** vs **quaternionic** |
+| Heisenberg group over F₅ vs C₂₅ ⋊ C₅ | 125 | 15,625 | element orders {1, 5} vs {1, 5, 25}; entirely different subgroup lattices |
 
-Predictions: the **coset hypothesis** says learned-circuit statistics should track the (different) subgroup lattices; the **matrix-level irrep hypothesis** says structure should track the (different) irrep realisations — e.g. embedding rank ≈ 2 vs ≈ 4 inside the 2-dim isotypic block, since a quaternionic irrep has no 2×2 real realisation; a **character-level-only** account predicts no difference at all. The extraspecial pair is primary (it is a central extension, so the task does not factor); the product pair is a cheap secondary with a known confound (the D₄ factor can be memorised across C₁₃ fibers) that requires structured splits.
+That each pair shares a character table is not cited from the literature — it is computed and verified directly with the library's character-table machinery, and pinned by tests alongside the experiments.
 
-Both order-125 groups are buildable with the existing Todd–Coxeter presentation solver; the order-104 pair with the existing `direct_product`.
+Predictions: the **coset hypothesis** says learned-circuit statistics should track the (different) subgroup lattices; the **matrix-level irrep hypothesis** says structure should track the (different) irrep realisations — e.g. embedding rank ≈ 2 vs ≈ 4 inside the 2-dim isotypic block, since a quaternionic irrep has no 2×2 real realisation; a **character-level-only** account predicts no difference at all. The dihedral/dicyclic pair is primary: neither group is a direct product, so the task does not factor, and the real-vs-quaternionic contrast gives the irrep hypothesis its sharpest quantitative prediction; both are additionally contrasted with C₁₃ ⋊ C₈ (same order, different character table). The order-125 pair is the secondary comparison (each group is a central extension, so it likewise does not factor).
+
+All of these are buildable with the existing machinery: the order-125 pair via the Todd–Coxeter presentation solver, Dih(104)/Dic(104) via the dihedral and dicyclic constructors, and C₁₃ ⋊ C₈ via `semidirect_product`.
 
 ### Methods
 
@@ -64,9 +66,9 @@ The Chughtai/Stander disagreement is a clean instance of the central epistemic p
 
 | | |
 |---|---|
-| ✅ Done | Group algebra + representation-theory library (character tables, isotypic projectors, Todd–Coxeter); reproducible training pipeline (manifests, dual logging, event-dense checkpointing); C₁₁₃ grokking validation; order-<20 negative result |
-| 🚧 Active | Checkpoint analysis tooling (`analysis/`): isotypic-energy spectra, per-block ablations, grokking-transition trajectories |
-| 🗓 Planned | Coset/subgroup-alignment metrics; the same-character-table pair experiment; FC baseline; cross-run evaluation harness |
+| Done | Group algebra + representation-theory library (character tables, isotypic projectors, Todd–Coxeter); reproducible training pipeline (manifests, dual logging, event-dense checkpointing); C₁₁₃ grokking validation; order-<20 negative result |
+| Active | Checkpoint analysis tooling (`analysis/`): isotypic-energy spectra, per-block ablations, grokking-transition trajectories |
+| Planned | Coset/subgroup-alignment metrics; the same-character-table pair experiment; FC baseline; cross-run evaluation harness |
 
 ---
 
