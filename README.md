@@ -36,6 +36,7 @@ The published evidence on both sides is **character-level** (correlations betwee
 
 * **Groups of order < 20 do not generalise.** Across S₃, Q₈, A₄, C₈ × weight-decay sweeps (150k epochs), every model memorised the training set quickly and stayed at chance test accuracy. The dataset is the bottleneck (|G|² ≤ 361 examples), not optimisation — so small groups are learning a lookup table, not the group operation, and any "algorithm" read off them would be an artefact. The investigation therefore runs on groups of order ≈ 100–350.
 * **Pipeline validated at scale.** C₁₁₃ (modular addition, the canonical grokking task) groks cleanly: train_frac 0.3, 30k epochs → test accuracy **99.98%**, with the weight-norm progress measure and dense checkpoints captured through the transition.
+* **C₁₁₃ is calibration, not evidence in the debate — by construction.** 113 is prime, so C₁₁₃ has no proper subgroups: the coset hypothesis is vacuous here and cannot make a competing prediction. Replicating the known irrep/Fourier signature on this run validates the measurement tools against a known answer; only the same-character-table pairs below can adjudicate between the hypotheses.
 
 ### The designed experiment: same-character-table pairs
 
@@ -43,7 +44,7 @@ Pairs of **non-isomorphic groups with identical character tables** make characte
 
 | Pair | Order | Dataset size | What differs |
 |---|---|---|---|
-| Dih(104) vs Dic(104) | 104 | 10,816 | 53 vs 1 involutions; different subgroup lattices; 2-dim irreps **real** vs **quaternionic** |
+| Dih(104) vs Dic(104) | 104 | 10,816 | 53 vs 1 involutions; Dih has 52 reflection subgroups while every subgroup of Dic contains its unique involution; 2-dim irreps **real** vs **quaternionic** |
 | Heisenberg group over F₅ vs C₂₅ ⋊ C₅ | 125 | 15,625 | element orders {1, 5} vs {1, 5, 25}; entirely different subgroup lattices |
 
 That each pair shares a character table is not cited from the literature — it is computed and verified directly with the library's character-table machinery, and pinned by tests alongside the experiments.

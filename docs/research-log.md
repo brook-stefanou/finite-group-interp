@@ -49,5 +49,10 @@
   - Dih(104) vs Dic(104)
     -Compare these with C13 ⋊ C8
   - Heisenberg group over F5 vs C25 ⋊ C5
-- Built analysis founadation: any checkpoint loads back into a model and forward_with_cache exposes all intermediates
-  - cache is recorded inside the real forward pass as a flag, not hooks (not using submodules) or a reimplmentation (activations can't drift)
+- Built analysis foundation: any checkpoint loads back into a model and forward_with_cache exposes all intermediates
+  - cache is recorded inside the real forward pass as a flag, not hooks (not using submodules) or a reimplementation (activations can't drift)
+- Realised why C113 is calibration only, not evidence in the irreps-vs-cosets debate: 113 is prime, so there are no proper subgroups — the coset hypothesis is vacuous on this group and can't make a competing prediction. Confirming the irrep signature here validates the measurement tools but adjudicates nothing.
+- Expectations for the C113 analysis, written down before running it:
+  - Energy concentrates in a small arbitrary set of frequency pairs (~4–6, which ones are seed lottery), near zero in the trivial block (constant functions carry no information about which element a token is)
+  - Why several frequencies and not one: logits ≈ Σ_k cos(k(a+b−c)), so used frequencies add coherently at c = a+b and cancel elsewhere — more frequencies sharpen the peak and lower the loss, while weight decay prices each one; the balance lands at a handful
+  - Falsification arm: a memorising network would smear energy near-uniformly across all 56 pairs
