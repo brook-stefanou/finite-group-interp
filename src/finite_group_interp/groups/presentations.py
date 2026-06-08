@@ -225,6 +225,10 @@ def build_group(spec: str) -> FiniteGroup:
         if n != 8:
             raise ValueError("Only 'Q8' (the quaternion group) is defined in the Q family.")
         return from_presentation("ab", ["aaaa", "bbAA", "baBa"])
+    if family == "DIC":
+        # Dicyclic group of order 4n: <a, b | a^2n, b^2 = a^n, b a b^-1 = a^-1>.
+        # Dic26 is Dic(104), the same-character-table partner of Dih(104) = D52.
+        return from_presentation("ab", ["a" * (2 * n), "bb" + "A" * n, "baBa"])
 
     raise ValueError(f"Unknown group family {family!r} in spec {spec!r}.")
 

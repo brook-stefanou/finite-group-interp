@@ -108,6 +108,22 @@ def test_build_group_quaternion_spec():
     assert _element_orders(g) == [1, 2, 4, 4, 4, 4, 4, 4]
 
 
+def test_build_group_dicyclic_spec():
+    # Dic_n has order 4n with a UNIQUE involution (a^n) -- the signature that
+    # distinguishes it from the dihedral group of the same order.
+    g = build_group("Dic3")
+    assert g.order == 12
+    assert _element_orders(g) == [1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 6, 6]
+    assert _element_orders(g).count(2) == 1
+
+
+def test_build_group_dicyclic_order_104():
+    # Dic(104) = Dic26, the partner of Dih(104)=D52 in the primary pair.
+    g = build_group("Dic26")
+    assert g.order == 104
+    assert _element_orders(g).count(2) == 1  # one involution (vs D52's 53)
+
+
 def test_build_group_klein_four_via_d2():
     # D2 = <a,b | a^2, b^2, (ab)^2> is the Klein four-group.
     g = build_group("D2")
