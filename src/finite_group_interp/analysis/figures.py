@@ -20,6 +20,7 @@ from finite_group_interp.analysis.irrep_metrics import (  # noqa: E402
     EnergySpectrum,
     EnergyTrajectory,
 )
+from finite_group_interp.analysis.functional_form import FunctionalFormResult  # noqa: E402
 
 _DPI = 300
 
@@ -215,5 +216,37 @@ def plot_energy_trajectory(traj: EnergyTrajectory, out: Path, keep: list[int]) -
     ax.set_title("Isotypic energy across training (W_E)")
     ax.legend(frameon=False, fontsize=8, ncols=2)
     _style(ax)
+    fig.savefig(out, dpi=_DPI)
+    plt.close(fig)
+
+
+def plot_functional_form_fve(
+    result: FunctionalFormResult, out: Path, title: str = "Functional-form FVE"
+) -> None:
+    """Per-kept-irrep full-matrix vs trace-only FVE, with cumulative annotated.
+
+    Equal-height bar pairs (full == trace) are the 1-dim signature: no
+    sub-character structure, so the group cannot adjudicate the debate.
+    """
+    keep = sorted(result.per_irrep_full)
+    full = [result.per_irrep_full[j] for j in keep]
+    trace = [result.per_irrep_trace[j] for j in keep]
+    x = np.arange(len(keep))
+    width = 0.38
+
+    fig, ax = plt.subplots(figsize=(max(4.0, 1.1 * len(keep) + 2), 4.0))
+    ax.bar(x - width / 2, full, width, label="full matrix", color=_ACCENT)
+    ax.bar(x + width / 2, trace, width, label="trace only", color=_NEUTRAL)
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"irrep {j}" for j in keep])
+    ax.set_ylabel("FVE")
+    ax.set_ylim(0, 1.02)
+    ax.set_title(
+        f"{title}\ncumulative full {result.cumulative_full:.3f}  |  "
+        f"trace {result.cumulative_trace:.3f}  |  gap {result.gap:.3f}"
+    )
+    ax.legend(frameon=False)
+    _style(ax)
+    fig.tight_layout()
     fig.savefig(out, dpi=_DPI)
     plt.close(fig)
