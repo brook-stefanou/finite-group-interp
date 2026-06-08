@@ -56,3 +56,20 @@
   - Energy concentrates in a small arbitrary set of frequency pairs (~4–6, which ones are seed lottery), near zero in the trivial block (constant functions carry no information about which element a token is)
   - Why several frequencies and not one: logits ≈ Σ_k cos(k(a+b−c)), so used frequencies add coherently at c = a+b and cancel elsewhere — more frequencies sharpen the peak and lower the loss, while weight decay prices each one; the balance lands at a handful
   - Falsification arm: a memorising network would smear energy near-uniformly across all 56 pairs
+
+---
+
+## Jun 8
+
+- Built functional-form fit: regress logits onto ρ(a)ρ(b)ρ(c)⁻¹ matrix elements; full-vs-trace FVE gap = sub-character structure
+- Irreps extracted numerically from the regular rep (commutant method; the single-generic-vector idea is wrong for dim ≥ 2)
+  - C113 calibration: irrep-formula FVE only 0.55, not the >0.9 I'd assumed
+  - But 98% of logit variance is a function of (a+b, c) — it does compute the sum
+  - Only 56% depends on a+b−c (translation-invariant); rest = image term (a+b+c) + harmonics
+  - Still sparse: 18 of 12769 Fourier modes hold 90% — structured rep-theory, not lookup
+  - gap exactly 0 (1-dim ⇒ matrix = trace) — proves the instrument won't invent a gap
+  - Lesson: "uses representation theory" ≠ "is the clean textbook formula"
+- Built coset side: subgroups/cosets/center + linear probe on residual + coset-direction ablation
+  - Probe = nn.Linear + LBFGS (just logistic regression; LBFGS suits small convex fits, no LR to tune)
+  - Controls: random-partition null + irrep-feature reference (kept irreps only — all-irrep is vacuous by Peter–Weyl)
+  - Both instruments now calibrated on known/planted answers; next is training the pairs
