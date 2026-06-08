@@ -21,13 +21,19 @@ import sys
 import time
 
 # --- the grid (edit me) ---------------------------------------------------
-# D52 = Dih(104), Dic26 = Dic(104): the primary same-character-table pair.
-# Both MUST be swept together so their learned structure is comparable.
-GROUPS = ["D52", "Dic26"]
+# The order-104 triple, all swept at identical hyperparameters so they're
+# directly comparable:
+#   D52     = Dih(104) ┐ primary same-character-table pair (the adjudication)
+#   Dic26   = Dic(104) ┘
+#   C13sdC8 = C13 ⋊ C8  -- same order, DIFFERENT character table (the contrast)
+# 3 groups x 3 seeds x 2 weight_decays x 1 train_frac = 18 runs.
+# At ~25 min/run (80k epochs, order 104) that's ~7.4 h worst case, less if they
+# grok early (stop_on_grok). Sized to fit an ~8 h window.
+GROUPS = ["D52", "Dic26", "C13sdC8"]
 SEEDS = [0, 1, 2]
 WEIGHT_DECAYS = [0.5, 1.0]
-TRAIN_FRACS = [0.3, 0.4]
-EPOCHS = 50_000  # cap; stop_on_grok ends grokking runs earlier
+TRAIN_FRACS = [0.4]  # more training data -> better grokking odds when uncertain
+EPOCHS = 80_000  # ~2.6x C113's grokking budget; stop_on_grok ends grokkers early
 STOP_ON_GROK = True  # stop ~5 evals after test_acc crosses 0.99
 # --------------------------------------------------------------------------
 

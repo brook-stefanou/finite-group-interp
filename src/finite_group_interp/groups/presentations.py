@@ -207,6 +207,22 @@ def build_group(spec: str) -> FiniteGroup:
     # Local import avoids a module-level cycle (generators imports group only).
     from finite_group_interp.groups.generators import GroupGenerators
 
+    spec = spec.strip()
+
+    # Named special cases that don't fit the family-letter+integer grammar.
+    if spec == "C13sdC8":
+        # C13 ⋊ C8 (order 104): C8 acts on C13 by mult-by-8, an order-4
+        # automorphism (gcd(8, |Aut C13|=12) = 4 -- the maximal action). The
+        # order-matched, different-character-table contrast to Dih/Dic(104).
+        c13 = GroupGenerators.cyclic_group(13)
+        c8 = GroupGenerators.cyclic_group(8)
+
+        def _c13_action(h: Element, n: Element) -> Element:
+            k = pow(8, c8.el_to_inx(h), 13)
+            return c13.elements[(k * c13.el_to_inx(n)) % 13]
+
+        return GroupGenerators.semidirect_product(c13, c8, _c13_action)
+
     match = re.fullmatch(r"([A-Za-z]+)(\d+)", spec.strip())
     if not match:
         raise ValueError(

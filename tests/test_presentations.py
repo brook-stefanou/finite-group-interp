@@ -124,6 +124,18 @@ def test_build_group_dicyclic_order_104():
     assert _element_orders(g).count(2) == 1  # one involution (vs D52's 53)
 
 
+def test_build_group_c13_semidirect_c8():
+    # C13 ⋊ C8 (order 104): the order-matched, different-character-table contrast
+    # to the Dih(104)/Dic(104) pair. C8 acts on C13 by mult-by-8 (order 4 mod 13).
+    g = build_group("C13sdC8")
+    assert g.order == 104
+    assert not _is_abelian(g)  # nontrivial action -> non-abelian
+    orders = set(_element_orders(g))
+    # order-8 AND order-13 elements -- D52 and Dic26 have neither order 8, so this
+    # is structurally a different group from both members of the pair.
+    assert 8 in orders and 13 in orders
+
+
 def test_build_group_klein_four_via_d2():
     # D2 = <a,b | a^2, b^2, (ab)^2> is the Klein four-group.
     g = build_group("D2")
