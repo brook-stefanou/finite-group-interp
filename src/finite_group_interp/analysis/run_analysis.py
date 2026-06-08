@@ -21,8 +21,10 @@ from finite_group_interp.analysis.figures import (
     plot_energy_spectrum,
     plot_energy_trajectory,
     plot_energy_vs_ablation,
+    plot_functional_form_fve,
     plot_loss_curve,
 )
+from finite_group_interp.analysis.functional_form import functional_form_fit
 from finite_group_interp.analysis.irrep_metrics import (
     block_ablation,
     energy_trajectory,
@@ -39,6 +41,7 @@ from finite_group_interp.analysis.loading import (
     step_of,
 )
 from finite_group_interp.training.manifest import get_git_commit
+from finite_group_interp.representations.irreps import extract_irreps
 from finite_group_interp.representations.projectors import real_isotypic_blocks
 from finite_group_interp.task import build_group_task, train_test_split
 
@@ -97,6 +100,13 @@ def analyze(run_dir: Path | str, publish: Path | None = None) -> dict[str, Any]:
         i for i, f in enumerate(spectra["W_U"].fractions) if f > 2 * spectra["W_U"].baseline[i]
     ]
     restricted_l, restricted_a = restricted_loss(ckpt.model, blocks, keep, tokens, targets)
+
+    # Matrix-level functional-form fit on the energy-kept blocks. `keep` indexes
+    # blocks; map to the character-table rows the irreps are keyed by.
+    keep_rows = sorted({idx for i in keep for idx in blocks[i].irrep_indices})
+    irreps = extract_irreps(ckpt.group)
+    ff = functional_form_fit(ckpt.model, ckpt.group, irreps, keep_rows)
+
     trajectory = energy_trajectory(run_dir, blocks, matrix="W_E")
 
     # Early-checkpoint selection: memorization phase (pre-grokking snapshot)
@@ -144,6 +154,17 @@ def analyze(run_dir: Path | str, publish: Path | None = None) -> dict[str, Any]:
             "loss": restricted_l,
             "acc": restricted_a,
         },
+        "functional_form": {
+            "keep_blocks": keep,
+            "keep_irrep_rows": keep_rows,
+            "per_irrep_full": {str(k): v for k, v in ff.per_irrep_full.items()},
+            "per_irrep_trace": {str(k): v for k, v in ff.per_irrep_trace.items()},
+            "cumulative_full": ff.cumulative_full,
+            "cumulative_trace": ff.cumulative_trace,
+            "gap": ff.gap,
+            "n_features_full": ff.n_features_full,
+            "n_features_trace": ff.n_features_trace,
+        },
         "trajectory": {
             "epochs": trajectory.epochs,
             "fractions": np.round(trajectory.fractions, 8).tolist(),
@@ -175,6 +196,12 @@ def analyze(run_dir: Path | str, publish: Path | None = None) -> dict[str, Any]:
 
     # Energy trajectory
     plot_energy_trajectory(trajectory, fig_dir / "energy-trajectory.png", keep=keep)
+
+    plot_functional_form_fve(
+        ff,
+        fig_dir / "functional-form-fve.png",
+        title=f"{ckpt.config.data.group} functional-form FVE (full vs trace)",
+    )
 
     # Pre-grok spectrum (memorization phase)
     has_pre_grok = False
