@@ -72,3 +72,7 @@ wandb/
 
 # Claude Code (local tooling config — not committed)
 .claude/
+
+# Sweep / run logs (local training artifacts)
+sweep*.log
+*.log

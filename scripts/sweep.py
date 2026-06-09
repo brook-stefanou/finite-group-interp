@@ -35,13 +35,29 @@ WEIGHT_DECAYS = [0.5, 1.0]
 TRAIN_FRACS = [0.4]  # more training data -> better grokking odds when uncertain
 EPOCHS = 80_000  # ~2.6x C113's grokking budget; stop_on_grok ends grokkers early
 STOP_ON_GROK = True  # stop ~5 evals after test_acc crosses 0.99
+# W&B logging mode:
+#   "off"     -- no logging at all (what the first overnight sweep used)
+#   "offline" -- full W&B runs to a local wandb/ dir, NO login/network needed;
+#                push later with `wandb sync wandb/offline-run-*`. Safe for
+#                unattended runs and you still get dashboards. (recommended)
+#   "online"  -- live to wandb.ai; requires `wandb login` first, and will STALL
+#                an unattended run if you're not logged in.
+WANDB = "online"  # preference: see runs live on wandb.ai (logged in, so no stall)
 # --------------------------------------------------------------------------
 
 
 def main() -> None:
     combos = list(itertools.product(GROUPS, SEEDS, WEIGHT_DECAYS, TRAIN_FRACS))
-    env = {**os.environ, "PYTHONPATH": "src", "WANDB_MODE": "disabled"}
-    print(f"SWEEP: {len(combos)} runs | epochs<= {EPOCHS} | stop_on_grok={STOP_ON_GROK}")
+    if WANDB == "off":
+        env = {**os.environ, "PYTHONPATH": "src", "WANDB_MODE": "disabled"}
+        wandb_override = "experiment.use_wandb=false"
+    else:
+        env = {**os.environ, "PYTHONPATH": "src", "WANDB_MODE": WANDB}  # offline | online
+        wandb_override = "experiment.use_wandb=true"
+    print(
+        f"SWEEP: {len(combos)} runs | epochs<= {EPOCHS} | "
+        f"stop_on_grok={STOP_ON_GROK} | wandb={WANDB}"
+    )
     sweep_start = time.time()
 
     for i, (group, seed, wd, frac) in enumerate(combos, 1):
@@ -51,7 +67,7 @@ def main() -> None:
             f"data.train_frac={frac}",
             f"experiment.seed={seed}",
             f"experiment.name={name}",
-            "experiment.use_wandb=false",
+            wandb_override,
             f"optim.weight_decay={wd}",
             f"optim.epochs={EPOCHS}",
             f"optim.stop_on_grok={str(STOP_ON_GROK).lower()}",
