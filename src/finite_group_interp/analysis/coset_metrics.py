@@ -222,8 +222,18 @@ def ablate_coset_direction(
     seed: int,
 ) -> dict[str, float]:
     """Project the coset subspace out of resid, recompute logits = resid @ W_U,
-    measure damage vs a matched random-subspace control, split into cross-coset
-    / within-coset error-rate increase. Non-destructive."""
+    measure damage, split into cross-coset / within-coset error-rate increase.
+    Non-destructive.
+
+    The control is a MATCHED random-partition subspace: the class-mean subspace
+    of a *shuffled* k-way labeling (same class sizes, no coset meaning) -- the
+    ablation analogue of the probe's random-partition null. Coset ablation
+    hurting more than this isolates coset-specific damage from "deleting any
+    class-mean-shaped subspace of this rank". (A random-*direction* subspace --
+    the old control -- sat outside the active region and was beaten trivially.)
+    NOTE: this controls capacity, not the irrep confound -- the coset clustering
+    may itself be irrep-driven; see the probe's excess_over_irrep for that.
+    """
     n = group.order
     w_u = model.W_U.detach().numpy()
     y = coset_labels(group, H, target)
@@ -232,21 +242,25 @@ def ablate_coset_direction(
 
     b = coset_subspace(resid, y)
     r_abl = resid - resid @ (b.T @ b)
-    q = _random_subspace(b.shape[0], resid.shape[1], seed)
-    r_rand = resid - resid @ (q.T @ q)
+    # matched control: class-mean subspace of a shuffled (meaningless) labeling.
+    y_rand = np.random.default_rng(seed).permutation(y)
+    b_rand = coset_subspace(resid, y_rand)
+    r_rand = resid - resid @ (b_rand.T @ b_rand)
 
     tgt = targets.numpy()
     base_ce, pred_base, base_cross = _ce_and_cross(resid, w_u, targets, n, coset_of)
     abl_ce, pred_abl, abl_cross = _ce_and_cross(r_abl, w_u, targets, n, coset_of)
-    rand_ce, _, _ = _ce_and_cross(r_rand, w_u, targets, n, coset_of)
+    rand_ce, _, rand_cross = _ce_and_cross(r_rand, w_u, targets, n, coset_of)
 
     base_within = float(((pred_base != tgt) & ~base_cross).mean())
     abl_within = float(((pred_abl != tgt) & ~abl_cross).mean())
+    base_cross_rate = float(base_cross.mean())
 
     return {
         "ablation_delta_loss": abl_ce - base_ce,
         "random_ablation_delta_loss": rand_ce - base_ce,
-        "ablation_cross_coset_delta": float(abl_cross.mean()) - float(base_cross.mean()),
+        "ablation_cross_coset_delta": float(abl_cross.mean()) - base_cross_rate,
+        "random_cross_coset_delta": float(rand_cross.mean()) - base_cross_rate,
         "ablation_within_coset_delta": abl_within - base_within,
     }
 
