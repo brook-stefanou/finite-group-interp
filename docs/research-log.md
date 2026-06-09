@@ -73,3 +73,10 @@
   - Probe = nn.Linear + LBFGS (just logistic regression; LBFGS suits small convex fits, no LR to tune)
   - Controls: random-partition null + irrep-feature reference (kept irreps only — all-irrep is vacuous by Peter–Weyl)
   - Both instruments now calibrated on known/planted answers; next is training the pairs
+
+## Jun 9
+
+- First pair runs going. Sweep over Dih(104) vs Dic(104), 3 seeds x 2 weight decays (0.5, 1.0), train_frac 0.4, 80k epochs. Still running (Dic seed 2 + the C13⋊C8 contrast to come).
+- Dih groks easily. All 3 seeds, both weight decays. wd 1.0 faster (~9-18k epochs) than wd 0.5 (~25-43k).
+- Dic much harder. Only groks at wd 1.0, and ~3-4x slower than Dih (~35-47k vs ~9-18k). At wd 0.5 it never groks
+- Same character table for the two, so this learnability gap can't be a character-level thing it has to be sub-character
