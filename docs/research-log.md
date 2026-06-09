@@ -80,3 +80,7 @@
 - Dih groks easily. All 3 seeds, both weight decays. wd 1.0 faster (~9-18k epochs) than wd 0.5 (~25-43k).
 - Dic much harder. Only groks at wd 1.0, and ~3-4x slower than Dih (~35-47k vs ~9-18k). At wd 0.5 it never groks
 - Same character table for the two, so this learnability gap can't be a character-level thing it has to be sub-character
+- Sweep finished. C13⋊C8 (the third, non-pair group) never groks — all 6 configs stuck at chance (test_acc ~0.01–0.04), pure memorisation, test_loss climbing. Higher wd made it worse not better.
+- Checked it's not a build bug: valid order-104 non-abelian group, 14 conjugacy classes. Real difference is irrep dimension — D52 and Dic26 are all dim-1/dim-2, C13⋊C8 has six dim-4 irreps holding 92% of the regular rep.
+- So grokking difficulty tracks max irrep dim, not group order (all three are order 104). The dim-4 circuits don't form in a budget that's plenty for dim-2. Small corroboration of the irrep story: the model's pain scales with rep-theoretic complexity, not table size.
+- Decision: matched pair comparison stays at wd 1.0 — the only decay where Dic groks across all 3 seeds. wd 0.5 is grok-fragile for Dic (2/3 seeds memorise), so it's not a clean matched setting.

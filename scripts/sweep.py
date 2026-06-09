@@ -29,6 +29,10 @@ import time
 # 3 groups x 3 seeds x 2 weight_decays x 1 train_frac = 18 runs.
 # At ~25 min/run (80k epochs, order 104) that's ~7.4 h worst case, less if they
 # grok early (stop_on_grok). Sized to fit an ~8 h window.
+# NOTE (2026-06-09 sweep): the matched Dih-vs-Dic comparison uses wd 1.0 ONLY.
+# wd 0.5 is grok-fragile for Dic26 (2/3 seeds memorise within 80k); Dih groks at
+# both. C13sdC8 never groks at any setting here -- its irreps are dim-4 (vs dim-2
+# for the pair), a genuinely harder target, not a hyperparameter miss.
 GROUPS = ["D52", "Dic26", "C13sdC8"]
 SEEDS = [0, 1, 2]
 WEIGHT_DECAYS = [0.5, 1.0]
