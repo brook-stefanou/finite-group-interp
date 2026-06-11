@@ -84,3 +84,12 @@
 - D52 and Dic26 are all dim-1/dim-2, C13⋊C8 has six dim-4 irreps holding 92% of the regular rep.
 - So grokking difficulty tracks max irrep dim, not group order (all three are order 104). Small corroboration of the irrep story: the model's pain scales with rep-theoretic complexity, not table size.
 - Decision: matched pair comparison stays at wd 1.0 — the only decay where Dic groks across all 3 seeds. wd 0.5 is grok-fragile for Dic (2/3 seeds memorise), so it's not a clean matched setting.
+
+---
+
+## Jun 11
+
+- Expanded to 8 seeds at wd 1.0 (added 3–7). Throttled W&B logging to every 100 epochs — full-res stays in JSONL — after every-step logging lagged the dashboard.
+- Learnability is the robust discriminator: Dih groks 8/8, ~15k median; Dic 7/8, ~47k median (~3× slower); the two distributions don't overlap. New: s3 fails to grok even at wd 1.0 (stalls at 0.856 by 80k), so Dic is grok-fragile at the "safe" decay too, not just wd 0.5.
+- FVE gap does NOT replicate the Jun 9 separation — that was a high-gap seed. Across all grokked runs: Dih 0.119±0.088 (n=8), Dic 0.048±0.045 (n=7). Both positive (every run uses full rank-4 in its dim-2 blocks), Dih>Dic in 5/7 seeds, but error bars overlap — too seed-noisy to discriminate on its own. Corroborates the irrep account, doesn't carry it.
+- Coset excess_over_irrep ~0 and indistinguishable between groups (Dih −0.034±0.172, Dic −0.035±0.104 over all normal subgroups × seeds) — cosets don't separate the pair. Correction to the earlier "no positive excess anywhere": D52-s3 hits +0.54 on a few subgroups, but that's a keep-set under-counting artifact (energy>2×baseline missed a used irrep → weak irrep reference), on the dihedral side and one seed. Honest claim: no group-level coset signal, not zero everywhere.

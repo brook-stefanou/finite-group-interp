@@ -6,6 +6,7 @@ from finite_group_interp.analysis.figures import (
     plot_energy_trajectory,
     plot_energy_vs_ablation,
     plot_loss_curve,
+    plot_metric_by_group,
 )
 from finite_group_interp.analysis.irrep_metrics import (
     AblationResult,
@@ -110,4 +111,25 @@ def test_plot_energy_trajectory_empty_keep(tmp_path):
     )
     out = tmp_path / "traj_empty.png"
     plot_energy_trajectory(traj, out, keep=[])
+    assert _written(out)
+
+
+def test_plot_metric_by_group(tmp_path):
+    out = tmp_path / "by_group.png"
+    # Unequal group sizes (a non-grokked seed dropped from one group) + an hline.
+    plot_metric_by_group(
+        {"Dih(104)": [0.12, 0.19, 0.01, 0.07], "Dic(104)": [0.05, 0.0, 0.03]},
+        out,
+        title="gap per seed",
+        ylabel="FVE gap",
+        hline=0.0,
+        hline_label="no signal",
+    )
+    assert _written(out)
+
+
+def test_plot_metric_by_group_single_value(tmp_path):
+    # n=1 group must not crash on the jitter/std path.
+    out = tmp_path / "by_group_single.png"
+    plot_metric_by_group({"A": [0.5], "B": [0.1, 0.2]}, out, title="t", ylabel="y")
     assert _written(out)

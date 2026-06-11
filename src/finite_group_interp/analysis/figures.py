@@ -220,6 +220,75 @@ def plot_energy_trajectory(traj: EnergyTrajectory, out: Path, keep: list[int]) -
     plt.close(fig)
 
 
+def plot_metric_by_group(
+    groups: dict[str, list[float]],
+    out: Path,
+    *,
+    title: str,
+    ylabel: str,
+    yscale: str = "linear",
+    hline: float | None = None,
+    hline_label: str | None = None,
+) -> None:
+    """Per-seed values for each group as a jittered strip + mean±std marker.
+
+    ``groups`` maps a group label -> its per-seed values (varying length is
+    fine; non-grokked seeds are simply omitted by the caller). One faint marker
+    per seed, a heavy marker at the mean with a std error bar. This is the
+    matched-pair summary view: the SPREAD across seeds is the point, so the
+    figure must show every seed, not just an aggregate. ``hline`` draws a
+    reference line (e.g. 0 for "no signal").
+    """
+    labels = list(groups)
+    fig, ax = plt.subplots(figsize=(max(5.5, 2.6 * len(labels) + 1.6), 4.5), layout="constrained")
+    if hline is not None:
+        ax.axhline(hline, color=_BASELINE_COLOR, linestyle="--", linewidth=0.8, label=hline_label)
+    for pos, label in enumerate(labels):
+        vals = np.asarray(groups[label], dtype=float)
+        color = _HIGHLIGHT_COLORS[pos % len(_HIGHLIGHT_COLORS)]
+        n = len(vals)
+        # Jittered strip on the left, mean±std marker offset to the right, so the
+        # summary never sits on top of the points. Deterministic jitter => the
+        # figure reproduces exactly (no RNG).
+        jitter = np.linspace(-0.10, 0.10, n) if n > 1 else np.zeros(1)
+        ax.scatter(pos - 0.14 + jitter, vals, color=color, alpha=0.5, s=34, zorder=2)
+        if n:
+            mean, std = float(vals.mean()), float(vals.std())
+            ax.errorbar(
+                pos + 0.16,
+                mean,
+                yerr=std,
+                fmt="o",
+                color=color,
+                markersize=9,
+                capsize=5,
+                elinewidth=1.5,
+                zorder=3,
+            )
+            ax.annotate(
+                f"{mean:.3f}\n±{std:.3f}\n(n={n})",
+                (pos + 0.16, mean),
+                xytext=(12, 0),
+                textcoords="offset points",
+                va="center",
+                fontsize=8.5,
+                color=color,
+            )
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels)
+    ax.set_xlim(-0.6, len(labels) - 1 + 0.8)
+    ax.set_ylabel(ylabel)
+    ax.set_yscale(yscale)
+    ax.set_title(title)
+    ax.title.set_fontsize(11)
+    if hline_label is not None:
+        ax.legend(frameon=False, fontsize=10)
+    _style(ax)
+    ax.grid(axis="x", visible=False)
+    fig.savefig(out, dpi=_DPI)
+    plt.close(fig)
+
+
 def plot_functional_form_fve(
     result: FunctionalFormResult, out: Path, title: str = "Functional-form FVE"
 ) -> None:

@@ -50,6 +50,10 @@ class OptimConfig(BaseModel):
     full_batch: bool = True
     log_every: int = Field(1, gt=0)  # evaluate + log metrics every N epochs
     print_every: int = Field(1000, gt=0)  # print a console progress line every N epochs
+    # W&B push cadence (epochs). JSONL keeps full resolution; W&B is downsampled
+    # so the dashboard renders fast and the local run files stay small. The final
+    # epoch and grok point are always pushed regardless.
+    wandb_every: int = Field(100, gt=0)
     # Early stop once generalization is reached. Always bounded by `epochs`.
     stop_on_grok: bool = False
     grok_test_acc: float = Field(0.99, gt=0.0, le=1.0)  # test-acc threshold counted as grokked

@@ -86,15 +86,22 @@ class BaseTrainer:
                 "Warning: use_wandb=True but 'wandb' package is not installed. Logging locally only."
             )
 
-    def log(self, metrics: dict[str, float], step: int | None = None) -> None:
-        """Log metrics to both JSONL and W&B."""
-        # Log locally
+    def log(
+        self, metrics: dict[str, float], step: int | None = None, to_wandb: bool = True
+    ) -> None:
+        """Log metrics to JSONL (always, full resolution) and optionally W&B.
+
+        The caller downsamples the W&B stream (``to_wandb=False`` to skip the
+        push) so the dashboard renders fast and local run files stay small; the
+        JSONL keeps every call. Cadence lives at the call site because it depends
+        on ``optim.wandb_every``, which only the concrete config carries.
+        """
+        # Log locally (always, full resolution)
         log_entry: dict[str, Any] = {"step": step} if step is not None else {}
         log_entry.update(metrics)
         self.jsonl_logger.log(log_entry)
 
-        # Log to W&B
-        if self.wandb_run is not None:
+        if to_wandb and self.wandb_run is not None:
             import wandb
 
             wandb.log(metrics, step=step)
@@ -299,7 +306,10 @@ class GroupGrokkingTrainer(BaseTrainer):
                     "test_acc": test_m["accuracy"],
                     "weight_norm": weight_norm,
                 }
-                self.log(metrics, step=epoch)
+                # Downsample the W&B stream (JSONL stays full-res); always push
+                # the final epoch so the last point lands on the dashboard.
+                push = epoch % self.config.optim.wandb_every == 0 or epoch == last_epoch
+                self.log(metrics, step=epoch, to_wandb=push)
 
                 if epoch % self.config.optim.print_every == 0 or epoch == last_epoch:
                     print(
