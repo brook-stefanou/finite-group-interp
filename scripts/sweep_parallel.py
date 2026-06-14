@@ -6,22 +6,40 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-GROUPS = ["Dic26", "D52"]  # Dic first: it's the slow one, so it starts earliest
-SEEDS = list(range(8, 18))  # 10 NEW seeds -> 20 runs total
+# Every knob below has an env-var override so the SAME committed file runs both
+# locally (its defaults) and on a fat cloud VM without editing -- e.g.
+#   SEEDS=8-47 MAX_WORKERS=20 WANDB=off uv run python scripts/sweep_parallel.py
+# SEEDS accepts a range "8-47" (inclusive) or a list "8,9,10"; GROUPS is comma-sep.
+
+
+def _seeds(default: list[int]) -> list[int]:
+    raw = os.environ.get("SEEDS")
+    if not raw:
+        return default
+    if "-" in raw and "," not in raw:
+        lo, hi = (int(x) for x in raw.split("-", 1))
+        return list(range(lo, hi + 1))  # inclusive upper bound
+    return [int(x) for x in raw.split(",")]
+
+
+GROUPS = os.environ.get("GROUPS", "Dic26,D52").split(",")  # Dic first: slow one starts earliest
+SEEDS = _seeds(list(range(8, 18)))  # local default: 10 new seeds -> 20 runs
 WEIGHT_DECAYS = [1.0]  # matched comparison uses wd1.0 only (Dic is grok-fragile below)
 TRAIN_FRACS = [0.4]
-EPOCHS = 80_000
+EPOCHS = int(os.environ.get("EPOCHS", 80_000))
 STOP_ON_GROK = True
 
 # --- parallelism ----------------------------------------------------------
-# Physical cores on this Mac is 10. Leave a couple for the OS / W&B uploads / you.
-MAX_WORKERS = 8
-THREADS_PER_RUN = 1  # pin each run to 1 core; the whole point (see module docstring)
+# Local default tuned for this 10-core Mac (leave a couple for the OS). On a
+# 32-vCPU VM, MAX_WORKERS=20 runs the whole sweep at once. NB a GCP vCPU is one
+# hyperthread, so keep THREADS_PER_RUN=1 and size MAX_WORKERS to ~vCPU count.
+MAX_WORKERS = int(os.environ.get("MAX_WORKERS", 8))
+THREADS_PER_RUN = int(os.environ.get("THREADS_PER_RUN", 1))  # pin each run; the whole point
 
 # W&B logging mode -- see sweep.py for the full explanation.
-#   "off" | "offline" | "online".  Many simultaneous online runs are fine (distinct
-#   run ids), just noisier on the dashboard. "offline" then `wandb sync` is calmest.
-WANDB = "online"
+#   "off" | "offline" | "online".  On a throwaway VM use "off" (no login needed;
+#   the analysis only consumes runs/). Locally "online" is the user's preference.
+WANDB = os.environ.get("WANDB", "online")
 # --------------------------------------------------------------------------
 
 LOG_DIR = Path("sweep_logs")
