@@ -40,9 +40,11 @@ from finite_group_interp.analysis.loading import (
     load_run,
     step_of,
 )
+from finite_group_interp.model import OneLayerTransformer
 from finite_group_interp.training.manifest import get_git_commit
+from finite_group_interp.groups.group import FiniteGroup
 from finite_group_interp.representations.irreps import extract_irreps
-from finite_group_interp.representations.projectors import real_isotypic_blocks
+from finite_group_interp.representations.projectors import IsotypicBlock, real_isotypic_blocks
 from finite_group_interp.task import build_group_task, train_test_split
 
 HEADLINE_FIGURES = (
@@ -78,6 +80,66 @@ def _memorization_epoch(metrics: list[dict[str, Any]]) -> int | None:
         if "train_acc" in m and m.get("train_acc", 0.0) >= 0.99 and m.get("test_acc", 1.0) < 0.5:
             return int(m["step"])
     return None
+
+
+def _embedding_rank(block: IsotypicBlock, w_e: np.ndarray) -> int:
+    """Rank of the embedding inside one block: singular values of
+    ``block.projector @ W_E`` thresholded at 1e-2 * the largest (matches
+    scripts/compare_pairs.py's matrix_report)."""
+    sv = np.linalg.svd(block.projector @ w_e, compute_uv=False)
+    return int(np.sum(sv > 1e-2 * sv[0])) if sv[0] > 0 else 0
+
+
+def irrep_metrics(
+    model: OneLayerTransformer,
+    group: FiniteGroup,
+    tokens: torch.Tensor,
+    targets: torch.Tensor,
+) -> dict[str, Any]:
+    """Model-level irrep tier, computed without touching disk (no trajectory).
+
+    Returns a compact summary of where the model's W_E energy concentrates, the
+    causal cost of ablating those blocks, the positive-control restricted loss,
+    and the functional-form FVE gap -- the same quantities ``analyze`` derives,
+    minus the run-dir-dependent trajectory.
+    """
+    n = group.order
+    blocks = real_isotypic_blocks(group)
+    w_e = weight_as_functions(model, "W_E", n)
+    spec = isotypic_energy(w_e, blocks)
+    keep = [i for i, f in enumerate(spec.fractions) if f > 2 * spec.baseline[i]]
+    ablations = block_ablation(model, blocks, tokens, targets, matrix="W_E")
+    restricted_l, restricted_a = restricted_loss(model, blocks, keep, tokens, targets)
+
+    keep_rows = sorted({idx for i in keep for idx in blocks[i].irrep_indices})
+    irreps = extract_irreps(group)
+    ff = functional_form_fit(model, group, irreps, keep_rows)
+
+    return {
+        "energy_concentration": float(sum(spec.fractions[i] for i in keep)),
+        "kept_blocks": [
+            {
+                "block": i,
+                "irrep_dim": blocks[i].dimension,
+                "block_dim": int(round(float(blocks[i].projector.trace().real))),
+                "energy": float(spec.fractions[i]),
+                "w_e_rank": _embedding_rank(blocks[i], w_e),
+            }
+            for i in keep
+        ],
+        "ablation_deltas": [
+            {"block": r.block_index, "delta_loss": r.delta_loss, "delta_acc": r.delta_acc}
+            for r in ablations
+            if r.block_index in keep
+        ],
+        "restricted_loss": float(restricted_l),
+        "restricted_acc": float(restricted_a),
+        "functional_form": {
+            "cumulative_full": ff.cumulative_full,
+            "cumulative_trace": ff.cumulative_trace,
+            "gap": ff.gap,
+        },
+    }
 
 
 def analyze(run_dir: Path | str, publish: Path | None = None) -> dict[str, Any]:

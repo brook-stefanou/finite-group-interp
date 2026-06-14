@@ -5,8 +5,13 @@ import numpy as np
 import pytest
 import torch
 
-from finite_group_interp.analysis.run_analysis import HEADLINE_FIGURES, analyze
+from finite_group_interp.analysis.run_analysis import (
+    HEADLINE_FIGURES,
+    analyze,
+    irrep_metrics,
+)
 from finite_group_interp.groups.catalog import resolve_group
+from finite_group_interp.task import build_group_task, train_test_split
 from finite_group_interp.training.config import ExperimentConfig, GrokkingConfig
 from finite_group_interp.training.trainer import build_model
 
@@ -46,6 +51,33 @@ def _make_run_dir(tmp_path, metrics_rows=None):
         json.dumps({"run_id": "t", "status": "completed", "git_commit": "abc1234"})
     )
     return run_dir
+
+
+def test_irrep_metrics_contract_shape():
+    config = GrokkingConfig(
+        experiment=ExperimentConfig(name="t", seed=0, use_wandb=False),
+        data={"group": "C8"},
+    )
+    group = resolve_group("C8")
+    model = build_model(config, group)
+
+    task = build_group_task(group)
+    split = train_test_split(task, config.data.train_frac, config.experiment.seed)
+    eq_col = np.full((len(split.test_inputs), 1), group.order)
+    tokens = torch.tensor(np.concatenate([split.test_inputs, eq_col], axis=1), dtype=torch.long)
+    targets = torch.tensor(split.test_targets, dtype=torch.long)
+
+    m = irrep_metrics(model, group, tokens, targets)
+    assert set(m) == {
+        "energy_concentration",
+        "kept_blocks",
+        "ablation_deltas",
+        "restricted_loss",
+        "restricted_acc",
+        "functional_form",
+    }
+    assert isinstance(m["energy_concentration"], float)
+    assert set(m["functional_form"]) == {"cumulative_full", "cumulative_trace", "gap"}
 
 
 def test_analyze_writes_metrics_and_figures(tmp_path):
