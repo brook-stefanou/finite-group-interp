@@ -58,12 +58,12 @@ class IrrepTier(BaseModel):
 class CosetSubgroup(BaseModel):
     h_order: int
     k: int
-    probe_acc: float
-    excess_null: float
-    excess_irrep: float
-    abl_cross: float
-    abl_ctrl: float
-    abl_excess: float
+    probe_acc: float  # held-out coset probe accuracy (fraction, [0, 1])
+    excess_null: float  # probe_acc minus random-partition null mean (accuracy points)
+    excess_irrep: float  # probe_acc minus irrep-feature control (acc pts); coset signal vs irreps
+    abl_cross: float  # cross-coset ERROR RATE increase post-ablation (dimensionless, [-1, 1])
+    abl_ctrl: float  # matched random-subspace control: CE-loss delta (nats)
+    abl_excess: float  # coset ablation CE-loss delta minus ctrl (nats); != abl_cross units
 
 
 class Provenance(BaseModel):
