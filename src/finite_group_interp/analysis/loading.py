@@ -16,14 +16,14 @@ import torch
 
 from finite_group_interp.groups.catalog import resolve_group
 from finite_group_interp.groups.group import FiniteGroup
-from finite_group_interp.model import OneLayerTransformer
+from finite_group_interp.model import GroupModel
 from finite_group_interp.training.config import GrokkingConfig
 from finite_group_interp.training.trainer import build_model
 
 
 @dataclass(frozen=True)
 class LoadedCheckpoint:
-    model: OneLayerTransformer  # weights loaded, eval() mode, CPU
+    model: GroupModel  # weights loaded, eval() mode, CPU
     config: GrokkingConfig  # validated from the dict embedded in the .pt
     group: FiniteGroup
     epoch: int

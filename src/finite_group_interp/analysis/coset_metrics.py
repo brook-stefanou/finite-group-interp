@@ -15,7 +15,7 @@ import torch
 
 from finite_group_interp.analysis.cache import forward_with_cache
 from finite_group_interp.groups.group import Element, FiniteGroup
-from finite_group_interp.model import OneLayerTransformer
+from finite_group_interp.model import GroupModel
 from finite_group_interp.representations.irreps import extract_irreps
 from finite_group_interp.task import build_group_task
 
@@ -61,9 +61,7 @@ def coset_labels(group: FiniteGroup, H: list[Element], target: Target) -> np.nda
     return np.array([coset_of[e] for e in _target_elements(group, target)])
 
 
-def _all_pairs_resid(
-    model: OneLayerTransformer, group: FiniteGroup
-) -> tuple[np.ndarray, torch.Tensor]:
+def _all_pairs_resid(model: GroupModel, group: FiniteGroup) -> tuple[np.ndarray, torch.Tensor]:
     """('='-position residual [|G|^2, d_model], targets [|G|^2]) over all pairs."""
     n = group.order
     task = build_group_task(group)
@@ -212,7 +210,7 @@ def _ce_and_cross(
 
 
 def ablate_coset_direction(
-    model: OneLayerTransformer,
+    model: GroupModel,
     group: FiniteGroup,
     H: list[Element],
     target: Target,
@@ -266,7 +264,7 @@ def ablate_coset_direction(
 
 
 def coset_analysis(
-    model: OneLayerTransformer,
+    model: GroupModel,
     group: FiniteGroup,
     keep_irreps: list[int],
     *,

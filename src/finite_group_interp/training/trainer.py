@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 from finite_group_interp.groups.catalog import resolve_group
 from finite_group_interp.groups.group import FiniteGroup
-from finite_group_interp.model import OneLayerTransformer
+from finite_group_interp.model import FCModel, GroupModel, OneLayerTransformer
 from finite_group_interp.task import build_group_task, train_test_split
 
 from .config import BaseConfig, GrokkingConfig, SnapshotConfig
@@ -207,12 +207,23 @@ def should_snapshot(step: int, config: SnapshotConfig) -> bool:
     return step % config.interval == 0
 
 
-def build_model(config: GrokkingConfig, group: FiniteGroup) -> OneLayerTransformer:
+def build_model(config: GrokkingConfig, group: FiniteGroup) -> GroupModel:
     """The one model-construction recipe, shared by trainer and analysis loader.
 
     Vocab sizes derive from the group (one token per element, plus '=' on the
-    input side); architecture hyperparameters come from ``config.model``.
+    input side); architecture hyperparameters come from ``config.model``. The
+    ``arch`` field selects the transformer (default) or the FC baseline; both
+    share the same vocab / n_ctx contract and ``logits[:, -1]`` read position.
     """
+    if config.model.arch == "fc":
+        return FCModel(
+            d_vocab_in=group.order + 1,  # group elements + '='
+            d_vocab_out=group.order,
+            n_ctx=3,
+            d_model=config.model.d_model,
+            d_mlp=config.model.d_mlp,
+            activation=config.model.activation,
+        )
     return OneLayerTransformer(
         d_vocab_in=group.order + 1,  # group elements + '='
         d_vocab_out=group.order,

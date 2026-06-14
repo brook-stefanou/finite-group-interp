@@ -153,3 +153,92 @@ class OneLayerTransformer(nn.Module):
                 logits=logits,
             )
         return logits
+
+
+class FCModel(nn.Module):
+    """One-hidden-layer fully-connected baseline for the architecture confound.
+
+    Mirrors the Stander et al. (2024) coset-paper model -- one-hot inputs, a single
+    hidden layer with ReLU, linear readout -- with two deliberate deviations so it
+    is directly comparable to ``OneLayerTransformer`` and its analysis instruments:
+
+    * a SHARED embedding ``W_E`` for both inputs (Stander use separate ``E_l``,
+      ``E_r``), so the isotypic-energy instrument reads the same ``W_E`` object as
+      the transformer;
+    * no biases and fan-in initialisation, matching this repo's clean-analysis
+      conventions and the transformer's weight-norm grokking regime.
+
+    Tokens are ``[batch, n_ctx]`` = ``(a, b, '=')``; only ``a`` and ``b`` are
+    embedded. ``forward`` returns logits ``[batch, n_ctx, d_vocab_out]`` with the
+    prediction broadcast to the read position (-1), so the model is a drop-in for
+    the trainer, evaluation, and the functional-form / energy / coset instruments
+    (which read ``logits[:, -1]``, ``W_E``, and ``resid_final[:, -1]``). For the
+    cache, ``resid_final`` is the post-ReLU hidden representation -- the FC's
+    structural analog of the transformer's final residual feeding ``W_U``.
+    """
+
+    def __init__(
+        self,
+        d_vocab_in: int,
+        d_vocab_out: int,
+        n_ctx: int,
+        d_model: int,
+        d_mlp: int,
+        activation: str,
+    ):
+        super().__init__()
+        self.d_vocab_in = d_vocab_in
+        self.d_vocab_out = d_vocab_out
+        self.n_ctx = n_ctx
+        self.d_model = d_model
+        self.d_mlp = d_mlp
+
+        self.W_E = nn.Parameter(torch.randn(d_vocab_in, d_model) * d_model**-0.5)
+        self.W_in = nn.Parameter(torch.randn(2 * d_model, d_mlp) * (2 * d_model) ** -0.5)
+        self.W_U = nn.Parameter(torch.randn(d_mlp, d_vocab_out) * d_vocab_out**-0.5)
+
+        activations = {"relu": nn.ReLU(), "gelu": nn.GELU(), "silu": nn.SiLU()}
+        self.activation = activations[activation]
+
+    @overload
+    def forward(self, tokens: torch.Tensor, return_cache: Literal[False] = ...) -> torch.Tensor: ...
+
+    @overload
+    def forward(self, tokens: torch.Tensor, return_cache: Literal[True]) -> ActivationCache: ...
+
+    def forward(
+        self, tokens: torch.Tensor, return_cache: bool = False
+    ) -> torch.Tensor | ActivationCache:
+        # tokens: [batch, n_ctx] int64 ids (a, b, '='); only a and b are used.
+        a = self.W_E[tokens[:, 0]]  # [batch, d_model]
+        b = self.W_E[tokens[:, 1]]  # [batch, d_model]
+        pre = torch.cat([a, b], dim=-1) @ self.W_in  # [batch, d_mlp]
+        post = self.activation(pre)
+        pred = post @ self.W_U  # [batch, d_vocab_out]
+        # Broadcast to every position so logits[:, -1] (the read position) is the
+        # prediction -- keeps the [batch, n_ctx, d_vocab_out] contract.
+        logits: torch.Tensor = pred.unsqueeze(1).expand(-1, self.n_ctx, -1)
+        if return_cache:
+            n = tokens.shape[0]
+            seq = self.n_ctx
+
+            def _seq(x: torch.Tensor) -> torch.Tensor:
+                return x.unsqueeze(1).expand(-1, seq, -1)
+
+            return ActivationCache(
+                embed=self.W_E[tokens],  # [batch, n_ctx, d_model]
+                # No attention in an FC; zero placeholders keep the cache contract.
+                attn_pattern=torch.zeros(n, 1, seq, seq),
+                attn_out=torch.zeros(n, seq, self.d_model),
+                mlp_pre=_seq(pre),
+                mlp_post=_seq(post),
+                resid_final=_seq(post),  # post-ReLU hidden = the read representation
+                logits=logits,
+            )
+        return logits
+
+
+# The two architectures share the vocab/n_ctx contract, a ``W_E``/``W_U`` weight
+# pair, and the ``logits[:, -1]`` read position, so the analysis instruments accept
+# either. ``build_model`` returns this union.
+GroupModel = OneLayerTransformer | FCModel

@@ -41,7 +41,7 @@ from finite_group_interp.analysis.loading import (
     load_run,
     step_of,
 )
-from finite_group_interp.model import OneLayerTransformer
+from finite_group_interp.model import GroupModel
 from finite_group_interp.training.manifest import get_git_commit
 from finite_group_interp.groups.group import FiniteGroup
 from finite_group_interp.representations.irreps import extract_irreps
@@ -102,7 +102,7 @@ def _embedding_rank(block: IsotypicBlock, w_e: np.ndarray) -> int:
 
 
 def irrep_metrics(
-    model: OneLayerTransformer,
+    model: GroupModel,
     group: FiniteGroup,
     tokens: torch.Tensor,
     targets: torch.Tensor,

@@ -33,8 +33,9 @@ class DataConfig(BaseModel):
 
 
 class ModelConfig(BaseModel):
+    arch: Literal["transformer", "fc"] = "transformer"  # "fc" = Stander-style FC baseline
     d_model: int = Field(64, gt=0)
-    n_heads: int = Field(4, gt=0)
+    n_heads: int = Field(4, gt=0)  # transformer only
     d_mlp: int = Field(256, gt=0)
     use_mlp: bool = True  # MLP carries the group-multiply circuit; usually keep on
     activation: Literal["relu", "gelu", "silu"] = "relu"

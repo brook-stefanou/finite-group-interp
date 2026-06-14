@@ -14,7 +14,7 @@ import numpy as np
 import torch
 
 from finite_group_interp.groups.group import FiniteGroup
-from finite_group_interp.model import OneLayerTransformer
+from finite_group_interp.model import GroupModel
 from finite_group_interp.representations.irreps import Irrep
 from finite_group_interp.task import build_group_task
 
@@ -24,7 +24,7 @@ def center_over_c(logits: np.ndarray) -> np.ndarray:
     return cast(np.ndarray, logits - logits.mean(axis=2, keepdims=True))
 
 
-def logit_tensor(model: OneLayerTransformer, group: FiniteGroup) -> np.ndarray:
+def logit_tensor(model: GroupModel, group: FiniteGroup) -> np.ndarray:
     """RAW logits L[a,b,c]: the model's score for output c on every input (a,b).
 
     Centering is the fit's job, so this returns un-centered logits. Output is
@@ -142,7 +142,7 @@ def fit_logit_tensor(
 
 
 def functional_form_fit(
-    model: OneLayerTransformer, group: FiniteGroup, irreps: list[Irrep], keep: list[int]
+    model: GroupModel, group: FiniteGroup, irreps: list[Irrep], keep: list[int]
 ) -> FunctionalFormResult:
     """Convenience wrapper: read the model's logits, then fit."""
     return fit_logit_tensor(logit_tensor(model, group), group, irreps, keep)

@@ -28,6 +28,10 @@ WEIGHT_DECAYS = [1.0]  # matched comparison uses wd1.0 only (Dic is grok-fragile
 TRAIN_FRACS = [0.4]
 EPOCHS = int(os.environ.get("EPOCHS", 80_000))
 STOP_ON_GROK = True
+# ARCH=fc runs the fully-connected baseline (architecture confound). FC runs get
+# an "fc-" name prefix (not "pair-") so the transformer pair figures/compare,
+# which glob "pair-<group>-s", never pick them up.
+ARCH = os.environ.get("ARCH", "transformer")
 
 # --- parallelism ----------------------------------------------------------
 # Local default tuned for this 10-core Mac (leave a couple for the OS). On a
@@ -50,12 +54,14 @@ def run_one(
 ) -> tuple[str, int, float]:
     """Launch one run.py subprocess; return (name, returncode, minutes)."""
     group, seed, wd, frac = combo
-    name = f"pair-{group}-s{seed}-wd{wd}-f{frac}"
+    prefix = "fc" if ARCH == "fc" else "pair"
+    name = f"{prefix}-{group}-s{seed}-wd{wd}-f{frac}"
     overrides = [
         f"data.group={group}",
         f"data.train_frac={frac}",
         f"experiment.seed={seed}",
         f"experiment.name={name}",
+        f"model.arch={ARCH}",
         wandb_override,
         f"optim.weight_decay={wd}",
         f"optim.epochs={EPOCHS}",

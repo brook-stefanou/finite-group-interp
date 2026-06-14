@@ -8,12 +8,12 @@ this and call ``model(tokens, return_cache=True)`` directly.
 
 import torch
 
-from finite_group_interp.model import ActivationCache, OneLayerTransformer
+from finite_group_interp.model import ActivationCache, GroupModel
 
 __all__ = ["ActivationCache", "forward_with_cache"]
 
 
-def forward_with_cache(model: OneLayerTransformer, tokens: torch.Tensor) -> ActivationCache:
+def forward_with_cache(model: GroupModel, tokens: torch.Tensor) -> ActivationCache:
     """Run ``tokens`` through ``model`` and return all intermediate activations.
 
     no_grad means the returned tensors are detached observations -- analyses

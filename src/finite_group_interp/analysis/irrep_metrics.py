@@ -18,7 +18,7 @@ import torch
 import torch.nn.functional as F
 
 from finite_group_interp.analysis.loading import list_checkpoints, load_checkpoint
-from finite_group_interp.model import OneLayerTransformer
+from finite_group_interp.model import GroupModel
 from finite_group_interp.representations.projectors import IsotypicBlock
 
 
@@ -58,9 +58,7 @@ def isotypic_energy(W: np.ndarray, blocks: list[IsotypicBlock]) -> EnergySpectru
     return EnergySpectrum(fractions=fractions, baseline=block_dims / n, block_dims=block_dims)
 
 
-def evaluate(
-    model: OneLayerTransformer, tokens: torch.Tensor, targets: torch.Tensor
-) -> tuple[float, float]:
+def evaluate(model: GroupModel, tokens: torch.Tensor, targets: torch.Tensor) -> tuple[float, float]:
     """(cross-entropy loss, accuracy) at the '=' position, no gradients."""
     with torch.no_grad():
         readout = model(tokens)[:, -1, :]
@@ -69,9 +67,7 @@ def evaluate(
     return loss, acc
 
 
-def weight_as_functions(
-    model: OneLayerTransformer, matrix: Literal["W_E", "W_U"], n: int
-) -> np.ndarray:
+def weight_as_functions(model: GroupModel, matrix: Literal["W_E", "W_U"], n: int) -> np.ndarray:
     """The weight matrix as [|G|, d]: columns are functions on the group.
 
     W_E: drop the '=' row (not a group element). W_U: transpose, so each
@@ -120,7 +116,7 @@ class AblationResult:
 
 
 def block_ablation(
-    model: OneLayerTransformer,
+    model: GroupModel,
     blocks: list[IsotypicBlock],
     tokens: torch.Tensor,
     targets: torch.Tensor,
@@ -145,7 +141,7 @@ def block_ablation(
 
 
 def restricted_loss(
-    model: OneLayerTransformer,
+    model: GroupModel,
     blocks: list[IsotypicBlock],
     keep: list[int],
     tokens: torch.Tensor,
