@@ -7,7 +7,18 @@ we do not overclaim. Thresholds are heuristic and tunable; they are named here.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from pydantic import BaseModel
+
+from finite_group_interp.analysis.coset_metrics import CosetResult, coset_analysis
+from finite_group_interp.analysis.loading import LoadedRun, load_run
+from finite_group_interp.analysis.run_analysis import (
+    _test_split_tensors,
+    irrep_metrics,
+)
+from finite_group_interp.representations.projectors import real_isotypic_blocks
+from finite_group_interp.training.manifest import get_git_commit
 
 # Tunable label thresholds (documented heuristics, not learned).
 EPS_COSET = 0.05  # coset excess_over_irrep below this == "adds nothing"
@@ -144,3 +155,70 @@ def compute_label(c: VerdictComponents, *, has_subgroups: bool) -> str:
     if c.coset_max_excess_over_irrep < EPS_COSET:
         return "irrep-consistent; coset-adds-nothing"
     return "irrep-consistent; coset-signal"
+
+
+def _coset_subgroup(r: CosetResult) -> CosetSubgroup:
+    """Map one ``CosetResult`` onto the provenanced ``CosetSubgroup`` record.
+
+    ``abl_excess`` is the coset-subspace ablation damage beyond the matched
+    random-partition control (``ablation_delta_loss - random_ablation_delta_loss``);
+    ``abl_ctrl`` is that control's own CE increase, ``abl_cross`` the cross-coset
+    error-rate increase from removing the coset directions.
+    """
+    return CosetSubgroup(
+        h_order=r.subgroup_size,
+        k=r.n_cosets,
+        probe_acc=r.probe_acc,
+        excess_null=r.excess_over_null,
+        excess_irrep=r.excess_over_irrep,
+        abl_cross=r.ablation_cross_coset_delta,
+        abl_ctrl=r.random_ablation_delta_loss,
+        abl_excess=r.ablation_delta_loss - r.random_ablation_delta_loss,
+    )
+
+
+def evidence_from_run(run: LoadedRun) -> Evidence:
+    """Assemble a full, provenanced ``Evidence`` record from a loaded run."""
+    ckpt = run.checkpoint
+    group = ckpt.group
+    tokens, targets = _test_split_tensors(ckpt)
+    irrep_raw = irrep_metrics(ckpt.model, group, tokens, targets)
+    blocks = real_isotypic_blocks(group)
+    keep_rows = sorted(
+        {idx for kb in irrep_raw["kept_blocks"] for idx in blocks[kb["block"]].irrep_indices}
+    )
+    coset_results = coset_analysis(ckpt.model, group, keep_rows)
+    coset = [_coset_subgroup(r) for r in coset_results] if coset_results else None
+
+    learn = learnability_from_metrics(run.metrics)
+    irrep = IrrepTier.model_validate(irrep_raw)
+    coset_max = max((c.excess_irrep for c in coset), default=0.0) if coset else 0.0
+    components = VerdictComponents(
+        irrep_energy_concentration=irrep.energy_concentration,
+        fve_gap=irrep.functional_form.gap,
+        coset_max_excess_over_irrep=coset_max,
+        grokked=learn.grokked,
+        grok_epoch=learn.grok_epoch,
+    )
+    label = compute_label(components, has_subgroups=coset is not None)
+    return Evidence(
+        provenance=Provenance(
+            run_id=run.run_dir.name,
+            group_spec=ckpt.config.data.group,
+            group_order=group.order,
+            checkpoint=ckpt.path.name,
+            checkpoint_epoch=ckpt.epoch,
+            git_commit=run.manifest.get("git_commit"),
+            analysis_commit=get_git_commit(),
+            generated=datetime.now(timezone.utc).isoformat(),
+        ),
+        learnability=learn,
+        irrep=irrep,
+        coset=coset,
+        verdict=Verdict(components=components, label=label),
+    )
+
+
+def run_all(run_dir: str, checkpoint: str | None = None) -> Evidence:
+    """Load a run directory (latest or named checkpoint) and build its Evidence."""
+    return evidence_from_run(load_run(run_dir, checkpoint))
