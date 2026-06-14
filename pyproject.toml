@@ -13,6 +13,7 @@ dependencies = [
     "sympy>=1.12",
     "einops>=0.8.2",
     "matplotlib>=3.8",
+    "seaborn>=0.13",
 ]
 
 [dependency-groups]
@@ -53,6 +54,12 @@ strict = true
 # If a third-party library ever forces a concession, prefer a narrow
 # per-module override here over inline ignores.
 warn_unused_ignores = true
+
+# seaborn ships no type stubs (and types-seaborn is unmaintained); figures only
+# use it for theming, so a narrow per-module override is the right concession.
+[[tool.mypy.overrides]]
+module = "seaborn.*"
+ignore_missing_imports = true
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
