@@ -106,6 +106,13 @@ uv run python scripts/run.py data.group=C113 data.train_frac=0.3 optim.epochs=30
 
 # ... then run the full irrep analysis on it (energy spectra, ablations, trajectory)
 uv run python scripts/analyze_run.py runs/<date>/<run_id>
+
+# Reproduce the same-character-table pair (one matched setting shown; sweep seeds for more)
+uv run python scripts/run.py data.group=D52   data.train_frac=0.4 optim.weight_decay=1.0 optim.epochs=80000
+uv run python scripts/run.py data.group=Dic26 data.train_frac=0.4 optim.weight_decay=1.0 optim.epochs=80000
+
+# Cross-seed comparison: learnability + matrix-level + coset tiers
+uv run python scripts/compare_pairs.py --coset runs/<date> [runs/<date> ...]
 ```
 
 Every run writes `manifest.json` (git hash, config hash, environment), `resolved_config.yaml`, `metrics.jsonl`, and weight checkpoints to `runs/<date>/<run_id>/`; the analysis adds `analysis/metrics.json` and figures. Any config field can be overridden with dotted CLI args, e.g. `data.train_frac=0.4 optim.weight_decay=1.0 experiment.seed=1`. (For a 5-second smoke test of the install, `data.group=C8 optim.epochs=200` works — but note the order-<20 finding above: groups that small memorise rather than generalise.)
