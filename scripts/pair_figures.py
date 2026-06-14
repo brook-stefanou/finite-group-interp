@@ -19,6 +19,7 @@ Usage:
 """
 
 import argparse
+import statistics
 from pathlib import Path
 
 from finite_group_interp.analysis.coset_metrics import (
@@ -27,6 +28,7 @@ from finite_group_interp.analysis.coset_metrics import (
 )
 from finite_group_interp.analysis.figures import plot_metric_by_group
 from finite_group_interp.analysis.functional_form import functional_form_fit
+from finite_group_interp.analysis.fve_gap_stats import welch_ttest
 from finite_group_interp.analysis.irrep_metrics import isotypic_energy, weight_as_functions
 from finite_group_interp.analysis.loading import load_run
 from finite_group_interp.representations.irreps import extract_irreps
@@ -119,6 +121,32 @@ def main(argv: list[str] | None = None) -> None:
     )
     gaps = {lbl: [gap_by_seed[lbl][s] for s in matched] for lbl in order}
     excess = {lbl: [v for s in matched for v in excess_by_seed[lbl][s]] for lbl in order}
+
+    # Stats block for report 02 / README (so one heavy run yields figures + numbers).
+    print("\n--- stats (for report 02 / README) ---")
+    for lbl in order:
+        total = len(grok_epochs[lbl]) + n_failed.get(lbl, 0)
+        print(f"{lbl}: grokked {len(grok_epochs[lbl])}/{total} at {args.wd}")
+    for lbl in order:
+        g = gaps[lbl]
+        s = statistics.stdev(g) if len(g) > 1 else 0.0
+        print(
+            f"  {lbl} R2-gap matched n={len(g)}: "
+            f"mean={statistics.mean(g):.3f} std={s:.3f} range=[{min(g):.3f}, {max(g):.3f}]"
+        )
+    if len(order) == 2:
+        w = welch_ttest(gaps[order[0]], gaps[order[1]])
+        print(
+            f"  Welch {order[0]} vs {order[1]}: "
+            f"t={w['t']:.3f} dof={w['dof']:.1f} p={w['p_two_sided']:.4f}"
+        )
+    for lbl in order:
+        e = excess[lbl]
+        s = statistics.stdev(e) if len(e) > 1 else 0.0
+        print(
+            f"  {lbl} coset excess_over_irrep n={len(e)}: "
+            f"mean={statistics.mean(e):+.3f} std={s:.3f} max={max(e):+.3f}"
+        )
 
     plot_metric_by_group(
         {lbl: grok_epochs[lbl] for lbl in order},

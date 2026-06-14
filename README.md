@@ -76,9 +76,21 @@ Predictions: the **coset hypothesis** says learned-circuit statistics should tra
 
 All of these are buildable with the existing machinery: the order-125 pair via the Todd–Coxeter presentation solver, Dih(104)/Dic(104) via the dihedral and dicyclic constructors, and C₁₃ ⋊ C₈ via `semidirect_product`.
 
+### Results on the primary pair (Dih(104) vs Dic(104))
+
+Across 38 seeds (weight decay 1.0; the matrix-level and coset contrasts taken on the 27 seeds where *both* groups grokked):
+
+![Grokking epoch by group across 38 seeds: the dihedral group groks early and reliably, the dicyclic group later and often not at all](docs/figures/pair-grok-epochs.png)
+
+* **The pair separates on *learnability*, not on a matrix-level signature.** Dih groks at **35/38** seeds (mean ~20k epochs, with **none** stuck in memorisation — the 3 misses are near-threshold at 0.94–0.99); Dic groks at **29/38**, much later (mean ~40k), with **6** seeds stuck in pure memorisation (test acc < 0.5). The quaternionic group is reliably harder to learn — a sub-character difference, since the character tables are identical.
+* **Cosets add nothing over irreps.** Coset-membership decodability, scored against the model's *own* kept irreps (the control both prior papers omit), has **mean excess ≈ −0.05** across every proper normal subgroup and seed — zero or negative. The naive probe hits 100%, but so does the irrep control, which is what exposes it as vacuous.
+* **No matrix-level real-vs-quaternionic signature.** The matrix-vs-trace R² gap — the instrument built to detect it — does **not** separate the groups (Welch p = 0.25 at n = 27).
+
+On this pair, **irreps are sufficient and cosets add nothing**, and the cleanest discriminator is optimisation difficulty, not converged-weight structure. **Full write-up: [reports/02-irreps-vs-cosets.md](reports/02-irreps-vs-cosets.md).**
+
 ### Methods
 
-Projections of embedding/attention weights onto isotypic (irreducible-representation) components via the projector library in `representations/`, coset/subgroup-alignment metrics (in progress), per-component ablations, and SVD of weights across training checkpoints. A fully-connected baseline is planned to control for architecture (the coset evidence is FC-based, the irrep evidence transformer-based).
+Projections of embedding/attention weights onto isotypic (irreducible-representation) components via the projector library in `representations/`, coset/subgroup-alignment metrics scored against an irrep-restricted control, the matrix-vs-trace functional-form fit, per-component ablations, and SVD of weights across training checkpoints. A fully-connected baseline (in progress) controls for architecture (the coset evidence is FC-based, the irrep evidence transformer-based).
 
 ### Why this matters
 
@@ -90,9 +102,9 @@ The Chughtai/Stander disagreement is a clean instance of the central epistemic p
 
 | | |
 |---|---|
-| Done | Group algebra + representation-theory library (character tables, isotypic projectors, Todd–Coxeter); reproducible training pipeline (manifests, dual logging, event-dense checkpointing); C₁₁₃ grokking validation; order-<20 negative result; checkpoint loading + activation-cache analysis API; irrep analysis of the grokked C₁₁₃ run ([report](reports/01-c113-calibration.md)) |
-| Active | Representation-product functional-form fit (irrep matrices from the regular representation — the matrix-level instrument the pair experiment needs) |
-| Planned | Coset/subgroup-alignment metrics; the same-character-table pair experiment; FC baseline; cross-run evaluation harness |
+| Done | Group algebra + representation-theory library (character tables, isotypic projectors, Todd–Coxeter); reproducible training pipeline (manifests, dual logging, event-dense checkpointing); C₁₁₃ grokking validation + irrep analysis ([report 01](reports/01-c113-calibration.md)); order-<20 negative result; checkpoint loading + activation-cache analysis API; functional-form fit + coset metrics with an irrep-restricted control; the Dih(104)/Dic(104) pair experiment across 38 seeds ([report 02](reports/02-irreps-vs-cosets.md)) |
+| Active | Order-125 dim-5 go/no-go (Heisenberg/F₅ — does a richer irrep structure grok at all?); fully-connected baseline on the pair (architecture confound) |
+| Planned | Order-125 second pair (C₂₅ ⋊ C₅); cross-run evaluation harness |
 
 ---
 
