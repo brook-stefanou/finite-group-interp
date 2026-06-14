@@ -80,12 +80,17 @@ def main(argv: list[str] | None = None) -> None:
 
     run_dirs = find_run_dirs(args.roots or ["runs"])
     # Keep only grokked pair runs at the matched weight decay.
+    # grok_epoch is a per-group property (every grokked seed counts), so it is
+    # pooled by group. The gap and coset contrasts are only honest at MATCHED
+    # seeds -- the seeds BOTH groups grokked -- so they are keyed by seed and
+    # intersected below, matching the report's Welch test (it would be unfair to
+    # compare a Dih seed against a Dic seed that never grokked).
     grok_epochs: dict[str, list[float]] = {}
-    gaps: dict[str, list[float]] = {}
-    excess: dict[str, list[float]] = {}
+    gap_by_seed: dict[str, dict[str, float]] = {}
+    excess_by_seed: dict[str, dict[str, list[float]]] = {}
     n_failed: dict[str, int] = {}
     for d in sorted(run_dirs):
-        group, _seed, wd = _parse(d.name)
+        group, seed, wd = _parse(d.name)
         if group not in _LABELS or wd != args.wd:
             continue
         label = _LABELS[group]
@@ -95,34 +100,42 @@ def main(argv: list[str] | None = None) -> None:
             continue
         grok_epochs.setdefault(label, []).append(float(grok))
         gap, keep_rows = _gap_and_keep_rows(d)
-        gaps.setdefault(label, []).append(gap)
-        excess.setdefault(label, []).extend(_coset_excess(d, keep_rows))
+        gap_by_seed.setdefault(label, {})[seed] = gap
+        excess_by_seed.setdefault(label, {})[seed] = _coset_excess(d, keep_rows)
         print(f"  {d.name}: grok@{grok} gap={gap:+.3f}")
 
-    if not gaps:
+    if not gap_by_seed:
         print(f"no grokked pair runs at {args.wd} under {args.roots}")
         return
 
-    order = [lbl for lbl in _LABELS.values() if lbl in gaps]
+    order = [lbl for lbl in _LABELS.values() if lbl in gap_by_seed]
     if n_failed:
         print("non-grok (excluded): " + ", ".join(f"{k} {v}" for k, v in n_failed.items()))
+
+    # Matched seeds: grokked by EVERY group present (intersection of seed sets).
+    matched = sorted(set.intersection(*(set(gap_by_seed[lbl]) for lbl in order)))
+    print(
+        f"matched seeds (both groups grokked, n={len(matched)}): {', '.join(matched) or '(none)'}"
+    )
+    gaps = {lbl: [gap_by_seed[lbl][s] for s in matched] for lbl in order}
+    excess = {lbl: [v for s in matched for v in excess_by_seed[lbl][s]] for lbl in order}
 
     plot_metric_by_group(
         {lbl: grok_epochs[lbl] for lbl in order},
         args.out / "pair-grok-epochs.png",
-        title=f"Grok epoch, per seed ({args.wd})",
+        title=f"Grok epoch, per grokked seed ({args.wd})",
         ylabel="grok epoch (test acc ≥ 0.99)",
     )
     plot_metric_by_group(
-        {lbl: gaps[lbl] for lbl in order},
+        gaps,
         args.out / "pair-fve-gap.png",
-        title=f"Functional-form FVE gap, per seed ({args.wd})",
-        ylabel="FVE gap (full − trace)",
+        title=f"Matrix-vs-trace R² gap, matched seeds ({args.wd})",
+        ylabel="R² gap (full − trace)",
     )
     plot_metric_by_group(
-        {lbl: excess[lbl] for lbl in order},
+        excess,
         args.out / "pair-coset-excess.png",
-        title=f"Coset excess over irrep reference ({args.wd})",
+        title=f"Coset excess over irrep reference, matched seeds ({args.wd})",
         ylabel="probe acc − irrep-ref acc",
         hline=0.0,
         hline_label="no signal beyond irreps",

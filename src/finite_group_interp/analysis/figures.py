@@ -14,6 +14,7 @@ from typing import Any  # noqa: E402
 import matplotlib.axes  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+import seaborn as sns  # noqa: E402
 
 from finite_group_interp.analysis.irrep_metrics import (  # noqa: E402
     AblationResult,
@@ -30,6 +31,59 @@ _NEUTRAL = "#B8B8B8"
 _BASELINE_COLOR = "#333333"
 _ACCENT = "#0072B2"
 
+# Refined-minimal ink/grid colours and a robust font stack (falls back to
+# DejaVu on machines/CI without Helvetica).
+_INK = "#2B2B2B"
+_MUTE = "#6A6A6A"
+_GRID = "#EAEAEA"
+_SPINE = "#9A9A9A"
+_FONT = ["Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans"]
+
+
+def _darken(hex_color: str, f: float = 0.72) -> str:
+    """Scale an #rrggbb colour toward black by factor f (for deep mean markers)."""
+    h = hex_color.lstrip("#")
+    r, g, b = (int(h[i : i + 2], 16) for i in (0, 2, 4))
+    return "#%02x%02x%02x" % (int(r * f), int(g * f), int(b * f))
+
+
+def _apply_pub_theme() -> None:
+    """seaborn publication theme: clean typography, despined axes, transparent
+    background so figures sit on any page colour.
+
+    Colour is still assigned per-artist from the Okabe-Ito palette above (accent
+    + grey carries the meaning), so we deliberately do NOT let seaborn pick a
+    categorical palette. This only upgrades fonts, spacing, spines, and saving.
+    """
+    sns.set_theme(
+        context="notebook",
+        style="ticks",
+        font_scale=1.0,
+        rc={
+            "font.family": _FONT,
+            "savefig.dpi": _DPI,
+            "savefig.transparent": True,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.edgecolor": _SPINE,
+            "axes.linewidth": 0.9,
+            "axes.titlelocation": "left",
+            "axes.titleweight": "regular",
+            "axes.titlecolor": _INK,
+            "axes.titlesize": 13,
+            "axes.titlepad": 12,
+            "axes.labelcolor": _INK,
+            "text.color": _INK,
+            "xtick.color": _INK,
+            "ytick.color": _INK,
+            "axes.grid": False,
+            "svg.fonttype": "none",
+        },
+    )
+
+
+_apply_pub_theme()
+
 
 def _block_color(block: int, highlight: list[int]) -> str:
     """Bar-chart color: significant blocks get a single accent blue; others neutral grey.
@@ -42,15 +96,16 @@ def _block_color(block: int, highlight: list[int]) -> str:
 
 
 def _style(ax: matplotlib.axes.Axes) -> None:
-    """Apply shared style to an Axes: remove top/right spines, subtle y-grid,
-    uniform tick/label sizes."""
+    """Apply shared style to an Axes: remove top/right spines, light y-grid,
+    tickless axes, uniform label sizes. Title size/weight/colour come from the
+    theme rc so every figure left-aligns consistently."""
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    ax.grid(axis="y", alpha=0.3)
-    ax.tick_params(labelsize=11)
-    ax.xaxis.label.set_fontsize(11)
-    ax.yaxis.label.set_fontsize(11)
-    ax.title.set_fontsize(12)
+    ax.yaxis.grid(True, color=_GRID, linewidth=0.9)
+    ax.set_axisbelow(True)
+    ax.tick_params(length=0, labelsize=11)
+    ax.xaxis.label.set_fontsize(11.5)
+    ax.yaxis.label.set_fontsize(11.5)
 
 
 def plot_accuracy_curve(metrics: list[dict[str, Any]], out: Path) -> None:
@@ -80,10 +135,12 @@ def plot_loss_curve(metrics: list[dict[str, Any]], out: Path) -> None:
     fig, ax = plt.subplots(figsize=(8, 4), layout="constrained")
     ax.plot(steps, train_raw, color="#777777", linewidth=1.0, label="train")
     ax.plot(steps, test_raw, color="#0072B2", linewidth=1.0, label="test")
-    # Linear x-axis: slingshot cycles resolve into well-separated periodic events
-    # instead of stacking in the compressed log tail; accuracy figure keeps log-x
-    # for early dynamics.
-    ax.set_xscale("linear")
+    # Symlog x to match the accuracy figure and the standard grokking
+    # presentation: it compresses the long pre-grok plateau and makes the
+    # memorisation -> generalisation transition legible. (Trade-off: the late
+    # slingshot cycles bunch up in the compressed tail; the transition is the
+    # point, so that's acceptable.)
+    ax.set_xscale("symlog")
     ax.set_yscale("log")
     ax.set_xlabel("epoch")
     ax.set_ylabel("loss")
@@ -240,59 +297,73 @@ def plot_metric_by_group(
     reference line (e.g. 0 for "no signal").
     """
     labels = list(groups)
-    fig, ax = plt.subplots(figsize=(max(5.5, 2.6 * len(labels) + 1.6), 4.5), layout="constrained")
+    fig, ax = plt.subplots(figsize=(max(6.0, 2.8 * len(labels) + 1.4), 4.7), layout="constrained")
     if hline is not None:
-        ax.axhline(hline, color=_BASELINE_COLOR, linestyle="--", linewidth=0.8, label=hline_label)
+        ax.axhline(hline, color="#C2C2C2", linestyle=(0, (4, 3)), linewidth=1.0, label=hline_label)
     for pos, label in enumerate(labels):
         vals = np.asarray(groups[label], dtype=float)
-        color = _HIGHLIGHT_COLORS[pos % len(_HIGHLIGHT_COLORS)]
+        light = _HIGHLIGHT_COLORS[pos % len(_HIGHLIGHT_COLORS)]
+        deep = _darken(light)
         n = len(vals)
-        # Jittered strip on the left, mean±std marker offset to the right, so the
-        # summary never sits on top of the points. Deterministic jitter => the
-        # figure reproduces exactly (no RNG).
-        jitter = np.linspace(-0.10, 0.10, n) if n > 1 else np.zeros(1)
-        ax.scatter(pos - 0.14 + jitter, vals, color=color, alpha=0.5, s=34, zorder=2)
+        # Jittered strip (white-edged) on the left, deep mean marker offset to the
+        # right so the summary never sits on the points. Deterministic jitter =>
+        # the figure reproduces exactly (no RNG).
+        jitter = np.linspace(-0.085, 0.085, n) if n > 1 else np.zeros(1)
+        ax.scatter(
+            pos - 0.13 + jitter,
+            vals,
+            color=light,
+            alpha=0.55,
+            s=46,
+            edgecolor="white",
+            linewidth=0.8,
+            zorder=2,
+        )
         if n:
-            mean, std = float(vals.mean()), float(vals.std())
+            mean = float(vals.mean())
+            # Sample std (ddof=1) to match the report's Welch summary; 0 for n==1.
+            std = float(vals.std(ddof=1)) if n > 1 else 0.0
             ax.errorbar(
-                pos + 0.16,
+                pos + 0.17,
                 mean,
                 yerr=std,
                 fmt="o",
-                color=color,
-                markersize=9,
-                capsize=5,
-                elinewidth=1.5,
+                color=deep,
+                markersize=7.5,
+                markeredgecolor="white",
+                markeredgewidth=0.8,
+                capsize=4,
+                elinewidth=1.4,
                 zorder=3,
             )
+            label_txt = f"{mean:.3f} ± {std:.3f}" if n > 1 else f"{mean:.3f}"
             ax.annotate(
-                f"{mean:.3f}\n±{std:.3f}\n(n={n})",
-                (pos + 0.16, mean),
-                xytext=(12, 0),
+                label_txt,
+                (pos + 0.17, mean),
+                xytext=(13, 0),
                 textcoords="offset points",
                 va="center",
-                fontsize=8.5,
-                color=color,
+                fontsize=10,
+                color=_MUTE,
             )
     ax.set_xticks(range(len(labels)))
-    ax.set_xticklabels(labels)
-    ax.set_xlim(-0.6, len(labels) - 1 + 0.8)
+    ax.set_xticklabels([f"{lbl}\nn = {len(groups[lbl])}" for lbl in labels])
+    ax.set_xlim(-0.6, len(labels) - 1 + 0.95)
     ax.set_ylabel(ylabel)
     ax.set_yscale(yscale)
     ax.set_title(title)
-    ax.title.set_fontsize(11)
     if hline_label is not None:
         ax.legend(frameon=False, fontsize=10)
     _style(ax)
     ax.grid(axis="x", visible=False)
-    fig.savefig(out, dpi=_DPI)
+    fig.savefig(out)
     plt.close(fig)
 
 
 def plot_functional_form_fve(
-    result: FunctionalFormResult, out: Path, title: str = "Functional-form FVE"
+    result: FunctionalFormResult, out: Path, title: str = "Functional-form R²"
 ) -> None:
-    """Per-kept-irrep full-matrix vs trace-only FVE, with cumulative annotated.
+    """Per-kept-irrep full-matrix vs trace-only R², with cumulative annotated.
 
     Equal-height bar pairs (full == trace) are the 1-dim signature: no
     sub-character structure, so the group cannot adjudicate the debate.
@@ -308,7 +379,7 @@ def plot_functional_form_fve(
     ax.bar(x + width / 2, trace, width, label="trace only", color=_NEUTRAL)
     ax.set_xticks(x)
     ax.set_xticklabels([f"irrep {j}" for j in keep])
-    ax.set_ylabel("FVE")
+    ax.set_ylabel("R²")
     ax.set_ylim(0, 1.02)
     ax.set_title(
         f"{title}\ncumulative full {result.cumulative_full:.3f}  |  "
