@@ -74,13 +74,20 @@ class Learnability(BaseModel):
 
 class VerdictComponents(BaseModel):
     irrep_energy_concentration: float
-    fve_gap: float
+    fve_gap: float  # reported component; intentionally NOT used by compute_label — FVE gap is too seed-noisy to threshold a label on
     coset_max_excess_over_irrep: float
     grokked: bool
     grok_epoch: int | None
 
 
 class Verdict(BaseModel):
+    """Threshold-derived compound label plus the components it was computed from.
+
+    The ``label`` field must be produced by ``compute_label``; ``Evidence`` records
+    should be assembled via the harness path so label and components stay consistent —
+    do not hand-set ``label`` in production code.
+    """
+
     components: VerdictComponents
     label: str
 

@@ -37,7 +37,7 @@ def test_label_coset_adds_nothing():
 
 def test_label_coset_signal():
     out = compute_label(_components(coset_max_excess_over_irrep=0.20), has_subgroups=True)
-    assert out.startswith("irrep-consistent; coset-signal")
+    assert out == "irrep-consistent; coset-signal"
 
 
 def test_label_inconclusive_when_irrep_weak():
