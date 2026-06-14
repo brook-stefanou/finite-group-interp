@@ -12,6 +12,7 @@ from pydantic import BaseModel
 # Tunable label thresholds (documented heuristics, not learned).
 EPS_COSET = 0.05  # coset excess_over_irrep below this == "adds nothing"
 IRREP_CONC_BAR = 0.50  # kept blocks must hold at least this fraction of W_E energy
+GROK_ACC = 0.99  # test_acc threshold that marks grokking
 
 
 class KeptBlock(BaseModel):
@@ -98,6 +99,37 @@ class Evidence(BaseModel):
     irrep: IrrepTier
     coset: list[CosetSubgroup] | None
     verdict: Verdict
+
+
+def _to_float(v: object, default: float = float("nan")) -> float:
+    """Coerce an ``object``-typed value to float, falling back to *default*."""
+    if v is None:
+        return default
+    try:
+        return float(v)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+
+
+def learnability_from_metrics(metrics: list[dict[str, object]]) -> Learnability:
+    """Grok epoch (first step with test_acc >= 0.99) and final test metrics."""
+    grok_epoch: int | None = None
+    final_acc = float("nan")
+    final_loss = float("nan")
+    for rec in metrics:
+        if "test_acc" not in rec:
+            continue
+        final_acc = _to_float(rec["test_acc"])
+        final_loss = _to_float(rec.get("test_loss"), final_loss)
+        if grok_epoch is None and final_acc >= GROK_ACC:
+            step_val = rec.get("step", -1)
+            grok_epoch = int(step_val) if isinstance(step_val, (int, float)) else -1
+    return Learnability(
+        grokked=grok_epoch is not None,
+        grok_epoch=grok_epoch,
+        final_test_acc=final_acc,
+        final_test_loss=final_loss,
+    )
 
 
 def compute_label(c: VerdictComponents, *, has_subgroups: bool) -> str:

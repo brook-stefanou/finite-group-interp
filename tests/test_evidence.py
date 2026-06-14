@@ -2,6 +2,7 @@ from finite_group_interp.analysis.evidence import (
     Evidence,
     VerdictComponents,
     compute_label,
+    learnability_from_metrics,
 )
 
 
@@ -82,3 +83,28 @@ def test_evidence_round_trips_through_json():
     again = Evidence.model_validate_json(ev.model_dump_json())
     assert again.verdict.label == "irrep-consistent; no-subgroups"
     assert again.coset is None
+
+
+def test_learnability_grokked():
+    metrics = [
+        {"step": 0, "test_acc": 0.01, "test_loss": 4.6},
+        {"step": 100, "test_acc": 0.50, "test_loss": 2.0},
+        {"step": 200, "test_acc": 0.995, "test_loss": 0.05},
+        {"step": 300, "test_acc": 0.999, "test_loss": 0.01},
+    ]
+    lr = learnability_from_metrics(metrics)
+    assert lr.grokked is True
+    assert lr.grok_epoch == 200  # first step with test_acc >= 0.99
+    assert lr.final_test_acc == 0.999  # last recorded
+    assert lr.final_test_loss == 0.01
+
+
+def test_learnability_never_grokked():
+    metrics = [
+        {"step": 0, "test_acc": 0.01, "test_loss": 4.6},
+        {"step": 100, "test_acc": 0.10, "test_loss": 3.0},
+    ]
+    lr = learnability_from_metrics(metrics)
+    assert lr.grokked is False
+    assert lr.grok_epoch is None
+    assert lr.final_test_acc == 0.10
