@@ -223,6 +223,14 @@ def build_group(spec: str) -> FiniteGroup:
 
         return GroupGenerators.semidirect_product(c13, c8, _c13_action)
 
+    if spec == "Heis5":
+        # Heisenberg group over F5: the exponent-5 extraspecial group of order
+        # 5^3 = 125. <a, b, c | a^5, b^5, c^5, [a,b]=c, c central>. Its irreps are
+        # 25 of degree 1 plus 4 of degree 5 -- the degree-5 blocks are why this is
+        # the order-125 dim-5 discriminator. Shares a character table with the
+        # exp-25 extraspecial group (C25 : C5), the non-isomorphic partner.
+        return from_presentation("abc", ["aaaaa", "bbbbb", "ccccc", "abABC", "acAC", "bcBC"])
+
     match = re.fullmatch(r"([A-Za-z]+)(\d+)", spec.strip())
     if not match:
         raise ValueError(
