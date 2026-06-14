@@ -26,6 +26,7 @@ from finite_group_interp.analysis.figures import (
 )
 from finite_group_interp.analysis.functional_form import functional_form_fit
 from finite_group_interp.analysis.irrep_metrics import (
+    EnergySpectrum,
     block_ablation,
     energy_trajectory,
     evaluate,
@@ -58,6 +59,16 @@ HEADLINE_FIGURES = (
 _TOP_BLOCK_RULE = "blocks with W_E energy > 2x baseline"
 
 _MATRICES: tuple[Literal["W_E"], Literal["W_U"]] = ("W_E", "W_U")
+
+
+def _keep_blocks(spectrum: EnergySpectrum) -> list[int]:
+    """Indices of isotypic blocks whose energy fraction exceeds 2x the random baseline."""
+    return [i for i, f in enumerate(spectrum.fractions) if f > 2 * spectrum.baseline[i]]
+
+
+def _keep_rows(keep: list[int], blocks: list[IsotypicBlock]) -> list[int]:
+    """Character-table irrep rows spanned by the kept blocks."""
+    return sorted({idx for i in keep for idx in blocks[i].irrep_indices})
 
 
 def _test_split_tensors(ckpt: LoadedCheckpoint) -> tuple[torch.Tensor, torch.Tensor]:
@@ -107,11 +118,11 @@ def irrep_metrics(
     blocks = real_isotypic_blocks(group)
     w_e = weight_as_functions(model, "W_E", n)
     spec = isotypic_energy(w_e, blocks)
-    keep = [i for i, f in enumerate(spec.fractions) if f > 2 * spec.baseline[i]]
+    keep = _keep_blocks(spec)
     ablations = block_ablation(model, blocks, tokens, targets, matrix="W_E")
     restricted_l, restricted_a = restricted_loss(model, blocks, keep, tokens, targets)
 
-    keep_rows = sorted({idx for i in keep for idx in blocks[i].irrep_indices})
+    keep_rows = _keep_rows(keep, blocks)
     irreps = extract_irreps(group)
     ff = functional_form_fit(model, group, irreps, keep_rows)
 
@@ -157,15 +168,13 @@ def analyze(run_dir: Path | str, publish: Path | None = None) -> dict[str, Any]:
     ablations = {
         m: block_ablation(ckpt.model, blocks, tokens, targets, matrix=m) for m in _MATRICES
     }
-    keep = [i for i, f in enumerate(spectra["W_E"].fractions) if f > 2 * spectra["W_E"].baseline[i]]
-    keep_wu = [
-        i for i, f in enumerate(spectra["W_U"].fractions) if f > 2 * spectra["W_U"].baseline[i]
-    ]
+    keep = _keep_blocks(spectra["W_E"])
+    keep_wu = _keep_blocks(spectra["W_U"])
     restricted_l, restricted_a = restricted_loss(ckpt.model, blocks, keep, tokens, targets)
 
     # Matrix-level functional-form fit on the energy-kept blocks. `keep` indexes
     # blocks; map to the character-table rows the irreps are keyed by.
-    keep_rows = sorted({idx for i in keep for idx in blocks[i].irrep_indices})
+    keep_rows = _keep_rows(keep, blocks)
     irreps = extract_irreps(ckpt.group)
     ff = functional_form_fit(ckpt.model, ckpt.group, irreps, keep_rows)
 
