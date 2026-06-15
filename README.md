@@ -1,6 +1,6 @@
 # finite-group-interp
 
-![CI](https://github.com/stefanoubrook/finite-group-interp/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/brook-stefanou/finite-group-interp/actions/workflows/ci.yml/badge.svg)
 
 **When a neural network learns a finite group operation, what algorithm is it actually implementing internally?**
 
@@ -18,7 +18,7 @@ finite-group-interp/
 │   ├── model.py            # 1-layer transformer (from scratch, analysis-friendly)
 │   ├── task.py             # group-multiplication task + train/test split
 │   ├── training/           # trainer, config schemas, run manifests, logging
-│   └── analysis/           # checkpoint loading + activation cache; irrep/coset metrics in progress
+│   └── analysis/           # checkpoint loading, activation cache, irrep/coset metrics, evidence/verdict harness
 ├── scripts/                # run.py (training), analyze_run.py (irrep analysis)
 ├── reports/                # committed research write-ups
 ├── tests/                  # 180+ tests incl. mathematical property tests
@@ -57,7 +57,7 @@ The published evidence on both sides is character-level: correlations between mo
 * **Groups of order < 20 do not generalise.** Across S₃, Q₈, A₄, C₈ × weight-decay sweeps (150k epochs), every model memorised the training set quickly and stayed at chance test accuracy. The dataset is the bottleneck (|G|² ≤ 361 examples), not optimisation — so small groups are learning a lookup table, not the group operation, and any "algorithm" read off them would be an artefact. The investigation therefore runs on groups of order ≈ 100–350.
 * **The pipeline reproduces the canonical grokking result.** C₁₁₃ (modular addition) groks cleanly: train fraction 0.3, 30k epochs, 99.77% test accuracy, with dense checkpoints captured through the transition.
 * **C₁₁₃ is calibration, not evidence in the debate.** 113 is prime, so C₁₁₃ has no proper subgroups: the coset hypothesis is vacuous here and cannot make a competing prediction. Replicating the known irrep signature on this run checks the measurement tools against an established answer. Only the same-character-table pairs below can adjudicate between the hypotheses.
-* **The signature replicates, and it is causal.** Three isotypic blocks hold 94% of the embedding's energy (14–23× the random baseline); ablating any one costs 9–17 nats of test loss, while the other 53 blocks sit at a 0.05-nat noise floor; the model restricted to those three blocks keeps 97.4% accuracy. All of this was predicted in the [research log](docs/research-log.md) before the analysis ran. Full write-up: [reports/01-c113-calibration.md](reports/01-c113-calibration.md).
+* **The signature replicates, and it is causal.** Three isotypic blocks hold 94% of the embedding's energy (14–23× the random baseline); ablating any one costs 9–17 nats of test loss, while the other 53 blocks sit at a 0.05-nat noise floor; the model restricted to those three blocks keeps 97.4% accuracy. All of this was predicted in the [research log](docs/research-log.md) before the analysis ran. Full write-up: [the project page](https://brook-stefanou.github.io/projects/finite-group-interp/).
 
 ![Isotypic energy across training: diffuse during memorisation, concentrating into three isotypic blocks exactly at the grokking transition](docs/figures/c113-energy-trajectory.png)
 
@@ -86,7 +86,7 @@ Across 38 seeds (weight decay 1.0; the matrix-level and coset contrasts taken on
 * **Cosets add nothing over irreps.** Coset-membership decodability, scored against the model's own kept irreps (the control both prior papers omit), has mean excess ≈ −0.05 across every proper normal subgroup and seed, zero or negative. The naive probe reaches 100%, but so does the irrep control, which is what exposes it as vacuous.
 * **No matrix-level real-vs-quaternionic signature.** The matrix-vs-trace R² gap, the instrument built to detect it, does not separate the groups (Welch p = 0.25 at n = 27).
 
-On this pair, irreps are sufficient and cosets add nothing, and the cleanest discriminator is optimisation difficulty, not converged-weight structure. All three findings replicate on a fully-connected baseline (6 seeds per group: Dih groks ~3× faster than Dic, R²-gap null at p = 0.18, coset excess-over-irrep ≈ 0), so they are not transformer artefacts, and the coset-null holds on the very architecture the coset account was originally read from. Full write-up: [reports/02-irreps-vs-cosets.md](reports/02-irreps-vs-cosets.md).
+On this pair, irreps are sufficient and cosets add nothing, and the cleanest discriminator is optimisation difficulty, not converged-weight structure. All three findings replicate on a fully-connected baseline (6 seeds per group: Dih groks ~3× faster than Dic, R²-gap null at p = 0.18, coset excess-over-irrep ≈ 0), so they are not transformer artefacts, and the coset-null holds on the very architecture the coset account was originally read from. Full write-up: [Irreps vs cosets on a same-character-table pair](https://brook-stefanou.github.io/projects/finite-group-interp/).
 
 ### Methods
 
@@ -102,9 +102,8 @@ The Chughtai/Stander disagreement is a clean instance of the central epistemic p
 
 | | |
 |---|---|
-| Done | Group algebra + representation-theory library (character tables, isotypic projectors, Todd–Coxeter); reproducible training pipeline (manifests, dual logging, event-dense checkpointing); C₁₁₃ grokking validation + irrep analysis ([report 01](reports/01-c113-calibration.md)); order-<20 negative result; checkpoint loading + activation-cache analysis API; functional-form fit + coset metrics with an irrep-restricted control; the Dih(104)/Dic(104) pair experiment across 38 seeds ([report 02](reports/02-irreps-vs-cosets.md)); fully-connected baseline on the pair (architecture confound — all three findings replicate) |
-| Active | Writing up the synthesis post (learnability asymmetry, coset-null, R²-gap null, dim-5 frontier) |
-| Planned | Reaching the order-125 dim-5 regime (Heisenberg/F₅ did not grok at the current data budget); order-125 second pair (C₂₅ ⋊ C₅); cross-run evaluation harness |
+| Done | Group + representation-theory library, reproducible training pipeline, and per-run evidence/verdict harness; both experiments shipped with write-ups — C₁₁₃ calibration ([report 01](reports/01-c113-calibration.md)) and the Dih(104)/Dic(104) pair across 38 seeds with a fully-connected baseline ([report 02](reports/02-irreps-vs-cosets.md)); full synthesis on the [project page](https://brook-stefanou.github.io/projects/finite-group-interp/) |
+| Planned | Reaching the order-125 dim-5 regime (Heisenberg/F₅ did not grok at the current data budget); order-125 second pair (C₂₅ ⋊ C₅) |
 
 ---
 
@@ -118,6 +117,9 @@ uv run python scripts/run.py data.group=C113 data.train_frac=0.3 optim.epochs=30
 
 # ... then run the full irrep analysis on it (energy spectra, ablations, trajectory)
 uv run python scripts/analyze_run.py runs/<date>/<run_id>
+
+# ... or emit a typed, threshold-derived verdict for a single run
+uv run python scripts/evaluate.py runs/<date>/<run_id>   # writes analysis/evidence.json
 
 # Reproduce the same-character-table pair (one matched setting shown; sweep seeds for more)
 uv run python scripts/run.py data.group=D52   data.train_frac=0.4 optim.weight_decay=1.0 optim.epochs=80000
