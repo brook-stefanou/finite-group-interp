@@ -12,7 +12,7 @@ Dih(104) and Dic(104) have **identical character tables** but different group st
 2. **The coset hypothesis gains no independent support over irreps.** Coset-membership decodability, measured against the model's *own* irreps as the control, has a mean *excess* of about −0.05 across all proper normal subgroups and seeds — zero or negative. The naive probe hits 100% — but so does the irrep control, which is exactly what exposes the probe as vacuous.
 3. **The matrix-vs-trace R² gap — the instrument built to detect the real/quaternionic difference — does not separate the groups** (Welch p = 0.25 at n = 27). The larger sample confirms what n = 6 only suggested.
 
-The headline: on this pair, **irreps are sufficient and cosets add nothing** — and the cleanest discriminator is how *hard* each group is to learn, not the post-hoc structure of the grokked weights.
+The headline: on this pair, **irreps are sufficient and cosets add nothing** — and the cleanest discriminator is how *hard* each group is to learn, not the post-hoc structure of the grokked weights. All three findings replicate on a fully-connected baseline (6 seeds/group), so they are not transformer artefacts — the coset-null in particular holds on the very architecture the coset account was originally read from.
 
 ## The question this pair can answer (and C₁₁₃ could not)
 
@@ -78,6 +78,18 @@ The two distributions overlap heavily and the means are close (0.074 vs 0.055); 
 
 The coset analysis also reports a causal check — ablating the coset-direction subspace and measuring the increase in cross-coset error, against a matched random-partition subspace control ([commit `86856d5`](../src/finite_group_interp/analysis/coset_metrics.py)). That control matches the *capacity* of the ablated subspace but **not the irrep confound**: the coset subspace overlaps the irrep subspace the model needs, so the ablation excess is large and variable for *both* groups and does not separate them. The load-bearing coset result is therefore the **observational `excess_over_irrep`** above, not the ablation delta.
 
+### The findings are not transformer artefacts
+
+![Grokking epoch by group on the fully-connected baseline](../docs/figures/fc-grok-epochs.png)
+
+The coset hypothesis was originally read off fully-connected networks, so a transformer-only result leaves architecture as a stated confound. Re-running the pair on a one-hidden-layer FC network (shared embedding of a and b, concatenated into a single ReLU layer, no biases; 6 seeds per group at wd 1.0) reproduces all three findings:
+
+- **Learnability asymmetry holds.** Dih groks at **6/6** seeds, fast (mean ~5.6k epochs, range 4.1k–6.7k); Dic groks at **6/6**, ~3× later (mean ~16.1k, range 14.7k–17.3k). The ordering — quaternionic harder than real — is identical to the transformer's. One difference: on the FC every Dic seed *does* eventually grok, so the catastrophic memorisation-plateau failure mode seen on the transformer (6/38 stuck) appears to be transformer-specific; on the FC the asymmetry is purely a difference in *speed*.
+- **Coset-null holds — on the very architecture that generated the coset hypothesis.** Mean `excess_over_irrep` is **+0.05 (Dih)** and **−0.04 (Dic)** across all 7 proper normal subgroups × 6 seeds; both centre on zero. The Dih spread is noisier than on the transformer (std 0.15, one normal subgroup reaching +0.55) rather than cleanly negative, but Dic is negative and neither group shows a systematic coset signal beyond its own irreps.
+- **Matrix-level R² gap stays null.** Dih mean 0.021, Dic mean 0.013 (Welch t = 1.51, dof = 6.5, **p = 0.18**) — the gaps are if anything *smaller* than on the transformer, and still do not separate the groups.
+
+So the learnability asymmetry is architecture-general, and cosets add nothing over irreps even on the fully-connected architecture that the coset account was built from.
+
 ## What this establishes — and what it cannot
 
 Established (38 seeds; matrix-level and coset at the 27 matched seeds):
@@ -85,18 +97,17 @@ Established (38 seeds; matrix-level and coset at the 27 matched seeds):
 1. **A learnability asymmetry** tied to the quaternionic structure: the character-identical dicyclic group is reliably harder to grok than the dihedral group, and fails in a qualitatively different way (memorisation plateaus vs near-misses). Difficulty appears to scale with the representation-theoretic complexity the character table hides.
 2. **No coset mechanism beyond the irreps** on this pair, under the irrep-restricted control that prior coset evidence omits.
 3. **No matrix-level signature** of the real/quaternionic difference at the level the R² gap measures — the natural instrument for it returns a null (p = 0.25). This is itself a finding: the readout does not appear to encode the distinction the gap was built to detect.
+4. **Architecture-generality of (1) and (2).** The learnability asymmetry and the coset-null both replicate on a fully-connected baseline (6 seeds/group) — including the coset-null *on the architecture the coset account was originally read from*. The findings are not transformer artefacts.
 
 Not established:
 
-- **Generality beyond dim-2 irreps.** The whole pair lives in 2-dimensional blocks, where the gap has the least room. The order-125 secondary pair (Heisenberg/F₅ vs C₂₅⋊C₅) has **dimension-5** irreps and is the natural next discriminator — a go/no-go run on Heisenberg/F₅ is in progress.
-- **Generality beyond the transformer.** Stander et al. used fully-connected networks, so a transformer-only result leaves architecture as a stated confound; a fully-connected baseline on this pair is in progress.
+- **Generality beyond dim-2 irreps.** The whole pair lives in 2-dimensional blocks, where the gap has the least room. The order-125 secondary pair (Heisenberg/F₅ vs C₂₅⋊C₅) has **dimension-5** irreps and is the natural next discriminator. A go/no-go run on Heisenberg/F₅ did **not** grok — at the base setting (1M epochs) or across a small weight-decay × train-fraction probe (best test accuracy ~0.15) — so the dim-5 regime is, for now, out of reach at this data budget rather than a place the gap has been made to speak. This is consistent with the difficulty ladder below (dim-1 easy → dim-2 harder → dim-4/5 not learned), but it means the dim-5 matrix contrast remains open.
 
 The order-matched negative is worth stating plainly: C13⋊C8 (different character table, dim-4 irreps) never grokked in 80k epochs at any setting. Read alongside "Dih easy, Dic harder," this hints at a difficulty ladder that climbs with representation-theoretic complexity — a thread the order-125 pair will test directly.
 
 ## Next
 
-- **Secondary pair, dim-5:** Heisenberg/F₅ vs C₂₅⋊C₅ — same character table, far richer matrix structure, where the R² gap has the most room to either speak or be conclusively silent. Heisenberg go/no-go running now.
-- **Fully-connected baseline:** the same pair on a one-hidden-layer FC network, to test whether the learnability asymmetry and the coset-null are architecture-specific.
+- **Secondary pair, dim-5:** Heisenberg/F₅ vs C₂₅⋊C₅ — same character table, far richer matrix structure, where the R² gap would have the most room to either speak or be conclusively silent. The Heisenberg go/no-go did not grok at the current data budget (see above), so reaching this regime needs either more data (larger train fraction) or an architectural/optimisation change before the matrix contrast can be run.
 
 ## Reproduce
 
@@ -106,4 +117,7 @@ uv sync
 GROUPS=Dic26,D52 SEEDS=0-37 uv run python scripts/sweep_parallel.py
 # cross-seed figures + stats (learnability, matrix-level R² gap, coset excess):
 uv run python scripts/pair_figures.py runs --wd wd1.0 --out docs/figures
+# fully-connected baseline (architecture confound): same pair, FC architecture
+GROUPS=Dic26,D52 SEEDS=0-5 ARCH=fc uv run python scripts/sweep_parallel.py
+uv run python scripts/pair_figures.py runs/<date> --arch fc --out docs/figures
 ```
