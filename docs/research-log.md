@@ -93,3 +93,19 @@
 - Learnability is the robust discriminator: Dih groks 8/8, ~15k median; Dic 7/8, ~47k median (~3× slower); the two distributions don't overlap. New: s3 fails to grok even at wd 1.0 (stalls at 0.856 by 80k), so Dic is grok-fragile at the "safe" decay too, not just wd 0.5.
 - FVE gap does NOT replicate the Jun 9 separation — that was a high-gap seed. Across all grokked runs: Dih 0.119±0.088 (n=8), Dic 0.048±0.045 (n=7). Both positive (every run uses full rank-4 in its dim-2 blocks), Dih>Dic in 5/7 seeds, but error bars overlap — too seed-noisy to discriminate on its own. Corroborates the irrep account, doesn't carry it.
 - Coset excess_over_irrep ~0 and indistinguishable between groups (Dih −0.034±0.172, Dic −0.035±0.104 over all normal subgroups × seeds) — cosets don't separate the pair. Correction to the earlier "no positive excess anywhere": D52-s3 hits +0.54 on a few subgroups, but that's a keep-set under-counting artifact (energy>2×baseline missed a used irrep → weak irrep reference), on the dihedral side and one seed. Honest claim: no group-level coset signal, not zero everywhere.
+
+---
+
+## Jun 14
+
+- Final 38-seed sweep, wd 1.0 (f 0.4, 80k ep), both groups; the 27 where both grok carry the matrix/coset contrasts. Learnability split sharpens: Dih 35/38 (~20k, 3 near-threshold misses, none stuck); Dic 29/38 (~40k, ~2× slower, 6 of 9 misses stuck in pure memorisation, low 0.02); Dic still never groks at wd 0.5. Different failure modes, not just speed — and character-identical, so it's sub-character, in training not the weights.
+- R² gap (renamed from FVE) a real null at n=27: Dih 0.074±0.064, Dic 0.055±0.054, Welch p=0.25. Jun 9 "separation" was one high-gap seed; both fill full rank in dim-2 blocks (kills the "real uses half the rank" prediction). Coset excess ≤0 too (Dih −0.055, Dic −0.044 over 7 normal subgroups × 27 seeds) — irrep control matches the naive probe, no signal on top.
+- Dim-5 prereq before building the order-125 pair: does a dim-5 group grok at all? Heisenberg/F5 (order 125, four 5-dim irreps), base wd1.0/f0.5 → 1M ep, train 1.0 but test plateaus ~0.11 (chance 0.008). Probes (wd 2.0, f 0.7, both, 80k each) don't rescue it — peaks 0.10/0.12/0.15, both-levers still climbing. No grok within budget, not "cannot". Ladder: dim-1 fast → dim-2 easy Dih/hard Dic → dim-4 (C13⋊C8) no-grok 80k → dim-5 no-grok 1M; tracks rep-theoretic complexity, not order. Parks the C25⋊C5 pair until a dim-5 groks.
+- Finalized report 02 + README at 38 seeds.
+
+---
+
+## Jun 15
+
+- Architecture confound (coset lit is FC, irrep lit transformer): retrained the pair on a 1-hidden-layer FC net (shared embed → concat → ReLU, no biases), 6 seeds/group, same wd. All three findings survive — learnability ~3× split (Dih ~5,600 ep, Dic ~16,100), R² gap null (0.021 vs 0.013, p=0.18), coset ≈0 (Dih +0.05, Dic −0.04). One difference: every Dic seed groks on FC, so the memorisation plateau (6/38 on the transformer) is transformer-specific — here it's purely speed.
+- Coset-null on the very architecture the coset account came from = the most demanding control. Folded into report 02 + README (+ fc- figures); also fixed the C113 headline to 99.77%.
