@@ -35,7 +35,7 @@ from finite_group_interp.representations.irreps import extract_irreps
 from finite_group_interp.representations.projectors import real_isotypic_blocks
 
 # compare_pairs is a sibling script (scripts/ is sys.path[0] when run directly).
-from compare_pairs import _parse, find_run_dirs, grok_summary  # noqa: E402
+from compare_pairs import _arch, _parse, find_run_dirs, grok_summary  # noqa: E402
 
 # Display labels for the two pair tokens (sweep uses the catalog tokens).
 _LABELS = {"D52": "Dih(104)", "Dic26": "Dic(104)"}
@@ -76,9 +76,19 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Cross-seed matched-pair summary figures.")
     parser.add_argument("roots", nargs="*", default=["runs"], help="run dirs / date dirs")
     parser.add_argument("--wd", default="wd1.0", help="weight-decay tag to keep (default wd1.0)")
+    parser.add_argument(
+        "--arch",
+        default="transformer",
+        choices=["transformer", "fc"],
+        help="architecture to keep (default transformer); 'fc' for the FC baseline sweep",
+    )
     parser.add_argument("--out", type=Path, default=Path("docs/figures"), help="figure output dir")
     args = parser.parse_args(argv)
     args.out.mkdir(parents=True, exist_ok=True)
+    # FC figures get an 'fc-' filename + title prefix so they never overwrite the
+    # transformer pair figures (both sweeps share the -<group>-s<seed>-wd<wd> tag).
+    prefix = "fc-" if args.arch == "fc" else "pair-"
+    arch_note = " [FC baseline]" if args.arch == "fc" else ""
 
     run_dirs = find_run_dirs(args.roots or ["runs"])
     # Keep only grokked pair runs at the matched weight decay.
@@ -93,7 +103,7 @@ def main(argv: list[str] | None = None) -> None:
     n_failed: dict[str, int] = {}
     for d in sorted(run_dirs):
         group, seed, wd = _parse(d.name)
-        if group not in _LABELS or wd != args.wd:
+        if group not in _LABELS or wd != args.wd or _arch(d.name) != args.arch:
             continue
         label = _LABELS[group]
         grok, _acc, _last = grok_summary(d / "metrics.jsonl")
@@ -150,25 +160,28 @@ def main(argv: list[str] | None = None) -> None:
 
     plot_metric_by_group(
         {lbl: grok_epochs[lbl] for lbl in order},
-        args.out / "pair-grok-epochs.png",
-        title=f"Grok epoch, per grokked seed ({args.wd})",
+        args.out / f"{prefix}grok-epochs.png",
+        title=f"Grok epoch, per grokked seed ({args.wd}){arch_note}",
         ylabel="grok epoch (test acc ≥ 0.99)",
     )
     plot_metric_by_group(
         gaps,
-        args.out / "pair-fve-gap.png",
-        title=f"Matrix-vs-trace R² gap, matched seeds ({args.wd})",
+        args.out / f"{prefix}fve-gap.png",
+        title=f"Matrix-vs-trace R² gap, matched seeds ({args.wd}){arch_note}",
         ylabel="R² gap (full − trace)",
     )
     plot_metric_by_group(
         excess,
-        args.out / "pair-coset-excess.png",
-        title=f"Coset excess over irrep reference, matched seeds ({args.wd})",
+        args.out / f"{prefix}coset-excess.png",
+        title=f"Coset excess over irrep reference, matched seeds ({args.wd}){arch_note}",
         ylabel="probe acc − irrep-ref acc",
         hline=0.0,
         hline_label="no signal beyond irreps",
     )
-    print(f"\nwrote 3 figures to {args.out}/  (pair-grok-epochs, pair-fve-gap, pair-coset-excess)")
+    print(
+        f"\nwrote 3 figures to {args.out}/  "
+        f"({prefix}grok-epochs, {prefix}fve-gap, {prefix}coset-excess)"
+    )
 
 
 if __name__ == "__main__":

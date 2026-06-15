@@ -144,15 +144,23 @@ def matrix_report(run_dir: Path, with_coset: bool = False) -> None:
         )
 
 
+def _arch(name: str) -> str:
+    """'fc' or 'transformer' from a run-dir name (the sweep prefixes fc runs)."""
+    return "fc" if "fc-" in name else "transformer"
+
+
 def _parse(name: str) -> tuple[str, str, str]:
     """(group, seed, wd) from a run-dir name; ('', '', '') if not a pair run.
 
-    Names carry a date prefix, e.g. '2026-06-08_190917_pair-D52-s0-wd1.0-f0.4',
-    so parse from the 'pair-' marker, not a blind split (the date has hyphens).
+    Names carry a date prefix, e.g. '2026-06-08_190917_pair-D52-s0-wd1.0-f0.4'
+    (transformer) or '2026-06-15_030456_fc-D52-s0-wd1.0-f0.4' (FC baseline), so
+    parse from the run marker, not a blind split (the date has hyphens). Both the
+    'pair-' and 'fc-' sweeps share the -<group>-s<seed>-wd<wd>-f<frac> layout.
     """
-    if "pair-" not in name:
+    marker = "fc-" if "fc-" in name else "pair-" if "pair-" in name else None
+    if marker is None:
         return ("", "", "")
-    p = name.split("pair-", 1)[1].split("-")  # ['D52', 's0', 'wd1.0', 'f0.4']
+    p = name.split(marker, 1)[1].split("-")  # ['D52', 's0', 'wd1.0', 'f0.4']
     return (p[0], p[1] if len(p) > 1 else "", p[2] if len(p) > 2 else "")
 
 
