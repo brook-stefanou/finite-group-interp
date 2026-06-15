@@ -55,7 +55,7 @@ The published evidence on both sides is **character-level** (correlations betwee
 ### Findings so far
 
 * **Groups of order < 20 do not generalise.** Across S₃, Q₈, A₄, C₈ × weight-decay sweeps (150k epochs), every model memorised the training set quickly and stayed at chance test accuracy. The dataset is the bottleneck (|G|² ≤ 361 examples), not optimisation — so small groups are learning a lookup table, not the group operation, and any "algorithm" read off them would be an artefact. The investigation therefore runs on groups of order ≈ 100–350.
-* **Pipeline validated at scale.** C₁₁₃ (modular addition, the canonical grokking task) groks cleanly: train_frac 0.3, 30k epochs → test accuracy **99.98%**, with the weight-norm progress measure and dense checkpoints captured through the transition.
+* **Pipeline validated at scale.** C₁₁₃ (modular addition, the canonical grokking task) groks cleanly: train_frac 0.3, 30k epochs → test accuracy **99.77%**, with the weight-norm progress measure and dense checkpoints captured through the transition.
 * **C₁₁₃ is calibration, not evidence in the debate — by construction.** 113 is prime, so C₁₁₃ has no proper subgroups: the coset hypothesis is vacuous here and cannot make a competing prediction. Replicating the known irrep/Fourier signature on this run validates the measurement tools against a known answer; only the same-character-table pairs below can adjudicate between the hypotheses.
 * **Calibration complete: the signature replicates, causally.** Three frequency blocks hold 94% of the embedding's energy (14–23× the random baseline); ablating any one costs 9–17 nats of test loss while the other 53 blocks sit at a 0.05-nat noise floor; the model restricted to just those three blocks retains 97.4% accuracy — all predicted in the [research log](docs/research-log.md) before the analysis ran. **Full write-up: [reports/01-c113-calibration.md](reports/01-c113-calibration.md).**
 
@@ -86,11 +86,11 @@ Across 38 seeds (weight decay 1.0; the matrix-level and coset contrasts taken on
 * **Cosets add nothing over irreps.** Coset-membership decodability, scored against the model's *own* kept irreps (the control both prior papers omit), has **mean excess ≈ −0.05** across every proper normal subgroup and seed — zero or negative. The naive probe hits 100%, but so does the irrep control, which is what exposes it as vacuous.
 * **No matrix-level real-vs-quaternionic signature.** The matrix-vs-trace R² gap — the instrument built to detect it — does **not** separate the groups (Welch p = 0.25 at n = 27).
 
-On this pair, **irreps are sufficient and cosets add nothing**, and the cleanest discriminator is optimisation difficulty, not converged-weight structure. **Full write-up: [reports/02-irreps-vs-cosets.md](reports/02-irreps-vs-cosets.md).**
+On this pair, **irreps are sufficient and cosets add nothing**, and the cleanest discriminator is optimisation difficulty, not converged-weight structure. All three findings **replicate on a fully-connected baseline** (6 seeds/group: Dih groks ~3× faster than Dic, R²-gap null at p = 0.18, coset excess-over-irrep ≈ 0) — so they are not transformer artefacts, and the coset-null holds on the architecture the coset account was originally read from. **Full write-up: [reports/02-irreps-vs-cosets.md](reports/02-irreps-vs-cosets.md).**
 
 ### Methods
 
-Projections of embedding/attention weights onto isotypic (irreducible-representation) components via the projector library in `representations/`, coset/subgroup-alignment metrics scored against an irrep-restricted control, the matrix-vs-trace functional-form fit, per-component ablations, and SVD of weights across training checkpoints. A fully-connected baseline (in progress) controls for architecture (the coset evidence is FC-based, the irrep evidence transformer-based).
+Projections of embedding/attention weights onto isotypic (irreducible-representation) components via the projector library in `representations/`, coset/subgroup-alignment metrics scored against an irrep-restricted control, the matrix-vs-trace functional-form fit, per-component ablations, and SVD of weights across training checkpoints. A fully-connected baseline (shared embedding → one hidden ReLU layer) controls for architecture — the coset evidence in the literature is FC-based, the irrep evidence transformer-based; running the pair on both architectures shows all three findings hold regardless.
 
 ### Why this matters
 
@@ -102,9 +102,9 @@ The Chughtai/Stander disagreement is a clean instance of the central epistemic p
 
 | | |
 |---|---|
-| Done | Group algebra + representation-theory library (character tables, isotypic projectors, Todd–Coxeter); reproducible training pipeline (manifests, dual logging, event-dense checkpointing); C₁₁₃ grokking validation + irrep analysis ([report 01](reports/01-c113-calibration.md)); order-<20 negative result; checkpoint loading + activation-cache analysis API; functional-form fit + coset metrics with an irrep-restricted control; the Dih(104)/Dic(104) pair experiment across 38 seeds ([report 02](reports/02-irreps-vs-cosets.md)) |
-| Active | Order-125 dim-5 go/no-go (Heisenberg/F₅ — does a richer irrep structure grok at all?); fully-connected baseline on the pair (architecture confound) |
-| Planned | Order-125 second pair (C₂₅ ⋊ C₅); cross-run evaluation harness |
+| Done | Group algebra + representation-theory library (character tables, isotypic projectors, Todd–Coxeter); reproducible training pipeline (manifests, dual logging, event-dense checkpointing); C₁₁₃ grokking validation + irrep analysis ([report 01](reports/01-c113-calibration.md)); order-<20 negative result; checkpoint loading + activation-cache analysis API; functional-form fit + coset metrics with an irrep-restricted control; the Dih(104)/Dic(104) pair experiment across 38 seeds ([report 02](reports/02-irreps-vs-cosets.md)); fully-connected baseline on the pair (architecture confound — all three findings replicate) |
+| Active | Writing up the synthesis post (learnability asymmetry, coset-null, R²-gap null, dim-5 frontier) |
+| Planned | Reaching the order-125 dim-5 regime (Heisenberg/F₅ did not grok at the current data budget); order-125 second pair (C₂₅ ⋊ C₅); cross-run evaluation harness |
 
 ---
 
@@ -125,6 +125,10 @@ uv run python scripts/run.py data.group=Dic26 data.train_frac=0.4 optim.weight_d
 
 # Cross-seed comparison: learnability + matrix-level + coset tiers
 uv run python scripts/compare_pairs.py --coset runs/<date> [runs/<date> ...]
+
+# Fully-connected baseline (architecture confound): same pair, FC instead of transformer
+GROUPS=Dic26,D52 SEEDS=0-5 ARCH=fc uv run python scripts/sweep_parallel.py
+uv run python scripts/pair_figures.py runs/<date> --arch fc --out docs/figures
 ```
 
 Every run writes `manifest.json` (git hash, config hash, environment), `resolved_config.yaml`, `metrics.jsonl`, and weight checkpoints to `runs/<date>/<run_id>/`; the analysis adds `analysis/metrics.json` and figures. Any config field can be overridden with dotted CLI args, e.g. `data.train_frac=0.4 optim.weight_decay=1.0 experiment.seed=1`. (For a 5-second smoke test of the install, `data.group=C8 optim.epochs=200` works — but note the order-<20 finding above: groups that small memorise rather than generalise.)
