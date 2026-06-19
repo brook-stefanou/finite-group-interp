@@ -71,3 +71,41 @@ def test_batched_first_step_matches_single_run():
     grads, losses = grad_fn(params, buffers, batches.train_tokens, batches.train_targets)
     assert_close(losses[0], ref_loss)
     assert_close(grads["W_E"][0], ref_grads)
+
+
+def test_member_writer_output_loads_via_analysis(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)  # run dirs are created under ./runs
+    from finite_group_interp.groups.catalog import resolve_group
+    from finite_group_interp.training.config import GrokkingConfig
+    from finite_group_interp.training.ensemble import (
+        MemberWriter,
+        slice_state_dict,
+        stack_seeded_models,
+    )
+    from finite_group_interp.analysis.loading import load_run  # see Step 3 note
+
+    cfg = GrokkingConfig(experiment={"name": "x", "seed": 0}, data={"group": "S3"})
+    group = resolve_group("S3")
+    base, params, buffers = stack_seeded_models(cfg, group, [5], device="cpu")
+
+    writer = MemberWriter(cfg, seed=5)
+    sd = slice_state_dict(params, buffers, 0)
+    writer.save_checkpoint("step_0", sd, epoch=0)
+    writer.write_metrics(
+        [
+            {
+                "step": 0,
+                "train_loss": 1.0,
+                "train_acc": 0.0,
+                "test_loss": 1.0,
+                "test_acc": 0.0,
+                "weight_norm": 1.0,
+            },
+        ]
+    )
+    writer.finalize({"test_acc": 0.0})
+
+    run = load_run(writer.run_dir)
+    assert run.metrics[0]["step"] == 0
+    assert (writer.run_dir / "checkpoints" / "step_0.pt").exists()
+    assert (writer.run_dir / "manifest.json").exists()

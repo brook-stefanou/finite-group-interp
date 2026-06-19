@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
 
 import numpy as np
 import torch
@@ -10,6 +10,14 @@ from torch.func import functional_call, grad_and_value, stack_module_state, vmap
 from finite_group_interp.groups.group import FiniteGroup
 from finite_group_interp.task import build_group_task, train_test_split
 from finite_group_interp.training.config import GrokkingConfig
+from finite_group_interp.training.logging_jsonl import JSONLLogger
+from finite_group_interp.training.manifest import (
+    create_manifest,
+    create_run_dir,
+    create_run_id,
+    save_resolved_config,
+    update_manifest,
+)
 from finite_group_interp.training.trainer import build_model, set_seed
 
 
@@ -98,3 +106,53 @@ def weight_norms(params: dict[str, Tensor]) -> Tensor:
     # per-member L2 over all params: sqrt(sum_k sum_dims!=0 p^2)
     per = [p.detach().pow(2).flatten(start_dim=1).sum(dim=1) for p in params.values()]
     return torch.stack(per, dim=0).sum(dim=0).sqrt()
+
+
+def member_config(config: GrokkingConfig, seed: int) -> GrokkingConfig:
+    data = config.model_dump()
+    arch = config.model.arch
+    prefix = "fc" if arch == "fc" else "pair"
+    name = (
+        f"{prefix}-{config.data.group}-s{seed}"
+        f"-wd{config.optim.weight_decay}-f{config.data.train_frac}"
+    )
+    data["experiment"]["seed"] = seed
+    data["experiment"]["name"] = name
+    data["experiment"]["use_wandb"] = False
+    return GrokkingConfig(**data)
+
+
+def slice_state_dict(
+    params: dict[str, Tensor], buffers: dict[str, Tensor], i: int
+) -> dict[str, Tensor]:
+    sd = {k: v[i].detach().clone() for k, v in params.items()}
+    sd.update({k: v[i].detach().clone() for k, v in buffers.items()})
+    return sd
+
+
+class MemberWriter:
+    """Writes one ensemble member as a standard run dir (manifest + metrics + ckpts)."""
+
+    def __init__(self, config: GrokkingConfig, seed: int) -> None:
+        self.config = member_config(config, seed)
+        run_id = create_run_id(self.config.experiment.name)
+        self.run_dir = create_run_dir(run_id)
+        create_manifest(self.config, self.run_dir)  # status="running"
+        save_resolved_config(self.config, self.run_dir)
+
+    def save_checkpoint(self, name: str, state_dict: dict[str, Tensor], epoch: int) -> None:
+        ckpt_dir = self.run_dir / "checkpoints"
+        ckpt_dir.mkdir(parents=True, exist_ok=True)
+        torch.save(
+            {"model_state_dict": state_dict, "epoch": epoch, "config": self.config.model_dump()},
+            ckpt_dir / f"{name}.pt",
+        )
+
+    def write_metrics(self, rows: list[dict[str, Any]]) -> None:
+        logger = JSONLLogger(self.run_dir / "metrics.jsonl")
+        for row in rows:
+            logger.log(dict(row))
+        logger.close()
+
+    def finalize(self, final_metrics: dict[str, float]) -> None:
+        update_manifest(self.run_dir, status="completed", final_metrics=final_metrics)
