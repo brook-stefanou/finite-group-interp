@@ -116,3 +116,24 @@ def test_experiment_reproducibility_defaults():
     assert exp.device == "cpu"  # reproducible + fast for small models
     assert exp.deterministic is True
     assert exp.use_wandb is True  # tracking on by default; tests/CI disable via WANDB_MODE
+
+
+def test_ensemble_config_defaults_off():
+    from finite_group_interp.training.config import GrokkingConfig
+
+    cfg = GrokkingConfig(experiment={"name": "x", "seed": 0})
+    assert cfg.ensemble.enabled is False
+    assert cfg.ensemble.seeds == []
+    assert cfg.ensemble.chunk_size is None
+
+
+def test_ensemble_config_overrides():
+    from finite_group_interp.training.config import GrokkingConfig
+
+    cfg = GrokkingConfig(
+        experiment={"name": "x", "seed": 0},
+        ensemble={"enabled": True, "seeds": [1, 2, 3], "chunk_size": 2},
+    )
+    assert cfg.ensemble.enabled is True
+    assert cfg.ensemble.seeds == [1, 2, 3]
+    assert cfg.ensemble.chunk_size == 2

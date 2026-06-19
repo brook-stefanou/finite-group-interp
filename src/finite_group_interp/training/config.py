@@ -77,8 +77,18 @@ class SnapshotConfig(BaseModel):
     event_rel_drop: float = Field(0.1, gt=0.0)  # relative test-loss drop that triggers a snapshot
 
 
+class EnsembleConfig(BaseModel):
+    """Opt-in batched-ensemble training. When `enabled`, `scripts/run_ensemble.py`
+    trains all `seeds` in one vmapped batch instead of one model per process."""
+
+    enabled: bool = False
+    seeds: list[int] = []
+    chunk_size: int | None = Field(default=None, gt=0)  # members per GPU chunk; None = all
+
+
 class GrokkingConfig(BaseConfig):
     data: DataConfig = Field(default_factory=DataConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
     optim: OptimConfig = Field(default_factory=OptimConfig)
     snapshot: SnapshotConfig = Field(default_factory=SnapshotConfig)
+    ensemble: EnsembleConfig = Field(default_factory=EnsembleConfig)
