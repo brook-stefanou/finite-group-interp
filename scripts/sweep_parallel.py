@@ -33,6 +33,12 @@ STOP_ON_GROK = True
 # which glob "pair-<group>-s", never pick them up.
 ARCH = os.environ.get("ARCH", "transformer")
 
+# Snapshot/log cadence -- defaults preserve prior behaviour; raise both for very
+# long (e.g. 1M-epoch) runs so they don't write million-line metrics or thousands
+# of checkpoints. Event-based snapshotting around grokking stays on regardless.
+SNAPSHOT_INTERVAL = int(os.environ.get("SNAPSHOT_INTERVAL", 1000))
+LOG_EVERY = int(os.environ.get("LOG_EVERY", 1))
+
 # --- parallelism ----------------------------------------------------------
 # Local default tuned for this 10-core Mac (leave a couple for the OS). On a
 # 32-vCPU VM, MAX_WORKERS=20 runs the whole sweep at once. NB a GCP vCPU is one
@@ -66,6 +72,8 @@ def run_one(
         f"optim.weight_decay={wd}",
         f"optim.epochs={EPOCHS}",
         f"optim.stop_on_grok={str(STOP_ON_GROK).lower()}",
+        f"optim.log_every={LOG_EVERY}",
+        f"snapshot.interval={SNAPSHOT_INTERVAL}",
     ]
     started = time.time()
     log_path = LOG_DIR / f"{name}.log"
