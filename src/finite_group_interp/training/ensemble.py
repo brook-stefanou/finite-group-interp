@@ -186,12 +186,18 @@ def _run_one_batch(config: GrokkingConfig, group: FiniteGroup, seeds: list[int])
     grok_streak = torch.zeros(n, dtype=torch.long, device=device)
 
     for epoch in range(config.optim.epochs):
+        # Evaluate train metrics BEFORE the gradient step so that logged train_loss and
+        # train_acc reflect the pre-update weights — exactly matching GroupGrokkingTrainer,
+        # which computes loss/logits in the forward pass and logs them before optimizer.step().
+        should_log = epoch % config.optim.log_every == 0 or epoch == last_epoch
+        if should_log:
+            tr_loss, tr_acc = eval_fn(params, buffers, batches.train_tokens, batches.train_targets)
+
         grads, _ = grad_fn(params, buffers, batches.train_tokens, batches.train_targets)
         opt.step(params, grads)
 
         event = torch.zeros(n, dtype=torch.bool, device=device)
-        if epoch % config.optim.log_every == 0 or epoch == last_epoch:
-            tr_loss, tr_acc = eval_fn(params, buffers, batches.train_tokens, batches.train_targets)
+        if should_log:
             te_loss, te_acc = eval_fn(params, buffers, batches.test_tokens, batches.test_targets)
             wn = weight_norms(params)
             for i in range(n):

@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import torch
 from torch.testing import assert_close
@@ -127,6 +129,56 @@ def test_run_ensemble_produces_one_dir_per_seed(tmp_path, monkeypatch):
     for d in dirs:
         assert (d / "manifest.json").exists()
         assert (d / "metrics.jsonl").exists()
+
+
+def _read_metrics(run_dir):
+    return [json.loads(line) for line in (run_dir / "metrics.jsonl").read_text().splitlines()]
+
+
+def test_single_vs_batched_seed_for_seed_cpu(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    from finite_group_interp.training.cli import build_config
+    from finite_group_interp.training.trainer import GroupGrokkingTrainer
+    from finite_group_interp.training.ensemble import run_ensemble
+
+    common = [
+        "data.group=S3",
+        "data.train_frac=0.5",
+        "optim.epochs=300",
+        "optim.log_every=1",
+        "optim.stop_on_grok=false",
+        "experiment.use_wandb=false",
+        "experiment.device=cpu",
+    ]
+    # two single runs (seeds 1, 2). Distinct names: create_run_id is timestamped
+    # only to the second, so a shared name would collide both into one run dir.
+    single_dirs = []
+    for seed in (1, 2):
+        cfg = build_config(common + [f"experiment.seed={seed}", f"experiment.name=single-s{seed}"])
+        trainer = GroupGrokkingTrainer.from_config(cfg)
+        trainer.fit()
+        single_dirs.append(trainer.run_dir)
+
+    # one batched run (seeds 1, 2)
+    ens_cfg = build_config(common + ["ensemble.enabled=true", "ensemble.seeds=[1,2]"])
+    ens_dirs = run_ensemble(ens_cfg)
+
+    # match member i to its single run by seed via manifest
+    for single in single_dirs:
+        s_seed = json.loads((single / "manifest.json").read_text())["seed"]
+        match = next(
+            d for d in ens_dirs if json.loads((d / "manifest.json").read_text())["seed"] == s_seed
+        )
+        s_m, e_m = _read_metrics(single), _read_metrics(match)
+        assert len(s_m) == len(e_m)
+        for a, b in zip(s_m, e_m):
+            assert a["step"] == b["step"]
+            assert_close(
+                torch.tensor(a["train_loss"]), torch.tensor(b["train_loss"]), rtol=1e-5, atol=1e-6
+            )
+            assert_close(
+                torch.tensor(a["test_acc"]), torch.tensor(b["test_acc"]), rtol=1e-5, atol=1e-6
+            )
 
 
 def test_run_ensemble_entry(tmp_path, monkeypatch):
