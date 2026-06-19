@@ -40,3 +40,34 @@ def test_stacked_init_matches_single_build_model():
         ref_sd = dict(ref.named_parameters())
         for name, stacked in params.items():
             assert_close(stacked[i], ref_sd[name])
+
+
+def test_batched_first_step_matches_single_run():
+    import torch.nn.functional as F
+    from finite_group_interp.groups.catalog import resolve_group
+    from finite_group_interp.training.config import GrokkingConfig
+    from finite_group_interp.training.trainer import build_model, set_seed
+    from finite_group_interp.training.ensemble import (
+        build_seed_batches,
+        stack_seeded_models,
+        make_grad_fn,
+    )
+
+    cfg = GrokkingConfig(experiment={"name": "x", "seed": 0}, data={"group": "S3"})
+    group = resolve_group("S3")
+    seed = 5
+
+    # single-run reference: loss + grad on the seed's train split
+    set_seed(seed)
+    model = build_model(cfg, group)
+    batches = build_seed_batches(group, 0.4, [seed], device="cpu")
+    logits = model(batches.train_tokens[0])
+    ref_loss = F.cross_entropy(logits[:, -1, :], batches.train_targets[0])
+    ref_grads = torch.autograd.grad(ref_loss, [model.W_E])[0]
+
+    # batched (N=1)
+    base, params, buffers = stack_seeded_models(cfg, group, [seed], device="cpu")
+    grad_fn = make_grad_fn(base)
+    grads, losses = grad_fn(params, buffers, batches.train_tokens, batches.train_targets)
+    assert_close(losses[0], ref_loss)
+    assert_close(grads["W_E"][0], ref_grads)

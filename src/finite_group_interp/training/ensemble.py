@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from typing import Callable
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch import Tensor
-from torch.func import stack_module_state
+from torch.func import functional_call, grad_and_value, stack_module_state, vmap
 
 from finite_group_interp.groups.group import FiniteGroup
 from finite_group_interp.task import build_group_task, train_test_split
@@ -55,3 +57,44 @@ def stack_seeded_models(
     params, buffers = stack_module_state(models)
     base = models[0]  # template; its params are ignored by functional_call
     return base, params, buffers
+
+
+def make_grad_fn(
+    base_model: torch.nn.Module,
+) -> Callable[
+    [dict[str, Tensor], dict[str, Tensor], Tensor, Tensor], tuple[dict[str, Tensor], Tensor]
+]:
+    def loss_of(
+        params: dict[str, Tensor],
+        buffers: dict[str, Tensor],
+        tokens: Tensor,
+        targets: Tensor,
+    ) -> Tensor:
+        logits = functional_call(base_model, (params, buffers), (tokens,))
+        return F.cross_entropy(logits[:, -1, :], targets)
+
+    return vmap(grad_and_value(loss_of), in_dims=(0, 0, 0, 0))
+
+
+def make_eval_fn(
+    base_model: torch.nn.Module,
+) -> Callable[[dict[str, Tensor], dict[str, Tensor], Tensor, Tensor], tuple[Tensor, Tensor]]:
+    def eval_of(
+        params: dict[str, Tensor],
+        buffers: dict[str, Tensor],
+        tokens: Tensor,
+        targets: Tensor,
+    ) -> tuple[Tensor, Tensor]:
+        logits = functional_call(base_model, (params, buffers), (tokens,))
+        readout = logits[:, -1, :]
+        loss = F.cross_entropy(readout, targets)
+        acc = (readout.argmax(dim=-1) == targets).float().mean()
+        return loss, acc
+
+    return vmap(eval_of, in_dims=(0, 0, 0, 0))
+
+
+def weight_norms(params: dict[str, Tensor]) -> Tensor:
+    # per-member L2 over all params: sqrt(sum_k sum_dims!=0 p^2)
+    per = [p.detach().pow(2).flatten(start_dim=1).sum(dim=1) for p in params.values()]
+    return torch.stack(per, dim=0).sum(dim=0).sqrt()
