@@ -1,3 +1,4 @@
+import traceback
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -38,13 +39,19 @@ def _to_tokens(pairs: np.ndarray, eq_id: int) -> np.ndarray:
 
 
 def build_seed_batches(
-    group: FiniteGroup, train_frac: float, seeds: list[int], device: str
+    group: FiniteGroup,
+    train_frac: float,
+    seeds: list[int],
+    device: str,
+    split_seed: int | None = None,
 ) -> SeedBatches:
     task = build_group_task(group)
     eq = group.order
     tr_tok, tr_tgt, te_tok, te_tgt = [], [], [], []
     for seed in seeds:
-        split = train_test_split(task, train_frac, seed)
+        # Mirror GroupGrokkingTrainer: use split_seed if provided, else the member seed.
+        effective_split_seed = split_seed if split_seed is not None else seed
+        split = train_test_split(task, train_frac, effective_split_seed)
         tr_tok.append(_to_tokens(split.train_inputs, eq))
         tr_tgt.append(split.train_targets)
         te_tok.append(_to_tokens(split.test_inputs, eq))
@@ -142,6 +149,9 @@ class MemberWriter:
         self.run_dir = create_run_dir(run_id)
         create_manifest(self.config, self.run_dir)  # status="running"
         save_resolved_config(self.config, self.run_dir)
+        # Open the logger once so rows are streamed per logged epoch (durability parity
+        # with single-run trainer whose JSONLLogger.log flushes on every call).
+        self._logger = JSONLLogger(self.run_dir / "metrics.jsonl")
 
     def save_checkpoint(self, name: str, state_dict: dict[str, Tensor], epoch: int) -> None:
         ckpt_dir = self.run_dir / "checkpoints"
@@ -151,20 +161,32 @@ class MemberWriter:
             ckpt_dir / f"{name}.pt",
         )
 
+    def log_metrics(self, row: dict[str, Any]) -> None:
+        """Write and flush one metrics row immediately (streaming durability)."""
+        self._logger.log(dict(row))
+
     def write_metrics(self, rows: list[dict[str, Any]]) -> None:
-        logger = JSONLLogger(self.run_dir / "metrics.jsonl")
+        """Batch-write metrics rows. Kept for back-compatibility; loops log_metrics."""
         for row in rows:
-            logger.log(dict(row))
-        logger.close()
+            self.log_metrics(row)
 
     def finalize(self, final_metrics: dict[str, float]) -> None:
+        self._logger.close()
         update_manifest(self.run_dir, status="completed", final_metrics=final_metrics)
 
 
 def _run_one_batch(config: GrokkingConfig, group: FiniteGroup, seeds: list[int]) -> list[Path]:
+    # Fix 4: mirror GroupGrokkingTrainer deterministic flag.
+    if config.experiment.deterministic:
+        torch.use_deterministic_algorithms(True)
+
     device = config.experiment.device
     base, params, buffers = stack_seeded_models(config, group, seeds, device)
-    batches = build_seed_batches(group, config.data.train_frac, seeds, device)
+    # Fix 3: pass config.data.split_seed so each member uses the same split-seed
+    # logic as GroupGrokkingTrainer (split_seed if not None else member seed).
+    batches = build_seed_batches(
+        group, config.data.train_frac, seeds, device, split_seed=config.data.split_seed
+    )
     grad_fn = make_grad_fn(base)
     eval_fn = make_eval_fn(base)
 
@@ -176,7 +198,6 @@ def _run_one_batch(config: GrokkingConfig, group: FiniteGroup, seeds: list[int])
         weight_decay=config.optim.weight_decay,
     )
     writers = [MemberWriter(config, s) for s in seeds]
-    metrics_rows: list[list[dict[str, Any]]] = [[] for _ in seeds]
     last_metrics: list[dict[str, Any]] = [{} for _ in seeds]
 
     snap = config.snapshot
@@ -185,58 +206,72 @@ def _run_one_batch(config: GrokkingConfig, group: FiniteGroup, seeds: list[int])
     prev_test_loss = torch.full((n,), float("inf"), device=device)
     grok_streak = torch.zeros(n, dtype=torch.long, device=device)
 
-    for epoch in range(config.optim.epochs):
-        # Evaluate train metrics BEFORE the gradient step so that logged train_loss and
-        # train_acc reflect the pre-update weights — exactly matching GroupGrokkingTrainer,
-        # which computes loss/logits in the forward pass and logs them before optimizer.step().
-        should_log = epoch % config.optim.log_every == 0 or epoch == last_epoch
-        if should_log:
-            tr_loss, tr_acc = eval_fn(params, buffers, batches.train_tokens, batches.train_targets)
-
-        grads, _ = grad_fn(params, buffers, batches.train_tokens, batches.train_targets)
-        opt.step(params, grads)
-
-        event = torch.zeros(n, dtype=torch.bool, device=device)
-        if should_log:
-            te_loss, te_acc = eval_fn(params, buffers, batches.test_tokens, batches.test_targets)
-            wn = weight_norms(params)
-            for i in range(n):
-                row = {
-                    "step": epoch,
-                    "train_loss": tr_loss[i].item(),
-                    "train_acc": tr_acc[i].item(),
-                    "test_loss": te_loss[i].item(),
-                    "test_acc": te_acc[i].item(),
-                    "weight_norm": wn[i].item(),
-                }
-                metrics_rows[i].append(row)
-                last_metrics[i] = row
-            if snap.event_based:
-                finite = torch.isfinite(prev_test_loss)
-                rel_drop = (prev_test_loss - te_loss) / prev_test_loss
-                event = finite & (rel_drop > snap.event_rel_drop)
-            prev_test_loss = te_loss
-            grok_streak = torch.where(
-                te_acc >= config.optim.grok_test_acc,
-                grok_streak + 1,
-                torch.zeros_like(grok_streak),
-            )
-
-        if should_snapshot(epoch, snap) or bool(event.any()):
-            for i in range(n):
-                writers[i].save_checkpoint(
-                    f"step_{epoch}", slice_state_dict(params, buffers, i), epoch
+    try:
+        for epoch in range(config.optim.epochs):
+            # Evaluate train metrics BEFORE the gradient step so that logged train_loss and
+            # train_acc reflect the pre-update weights — exactly matching GroupGrokkingTrainer,
+            # which computes loss/logits in the forward pass and logs them before optimizer.step().
+            should_log = epoch % config.optim.log_every == 0 or epoch == last_epoch
+            if should_log:
+                tr_loss, tr_acc = eval_fn(
+                    params, buffers, batches.train_tokens, batches.train_targets
                 )
 
-        if config.optim.stop_on_grok and bool((grok_streak >= config.optim.grok_patience).all()):
-            for i in range(n):
-                writers[i].save_checkpoint(
-                    f"grokked_step_{epoch}", slice_state_dict(params, buffers, i), epoch
+            grads, _ = grad_fn(params, buffers, batches.train_tokens, batches.train_targets)
+            opt.step(params, grads)
+
+            event = torch.zeros(n, dtype=torch.bool, device=device)
+            if should_log:
+                te_loss, te_acc = eval_fn(
+                    params, buffers, batches.test_tokens, batches.test_targets
                 )
-            break
+                wn = weight_norms(params)
+                for i in range(n):
+                    row = {
+                        "step": epoch,
+                        "train_loss": tr_loss[i].item(),
+                        "train_acc": tr_acc[i].item(),
+                        "test_loss": te_loss[i].item(),
+                        "test_acc": te_acc[i].item(),
+                        "weight_norm": wn[i].item(),
+                    }
+                    # Fix 2: stream each row immediately (flush on every logged epoch).
+                    writers[i].log_metrics(row)
+                    last_metrics[i] = row
+                if snap.event_based:
+                    finite = torch.isfinite(prev_test_loss)
+                    rel_drop = (prev_test_loss - te_loss) / prev_test_loss
+                    event = finite & (rel_drop > snap.event_rel_drop)
+                prev_test_loss = te_loss
+                grok_streak = torch.where(
+                    te_acc >= config.optim.grok_test_acc,
+                    grok_streak + 1,
+                    torch.zeros_like(grok_streak),
+                )
+
+            if should_snapshot(epoch, snap) or bool(event.any()):
+                for i in range(n):
+                    writers[i].save_checkpoint(
+                        f"step_{epoch}", slice_state_dict(params, buffers, i), epoch
+                    )
+
+            if config.optim.stop_on_grok and bool(
+                (grok_streak >= config.optim.grok_patience).all()
+            ):
+                for i in range(n):
+                    writers[i].save_checkpoint(
+                        f"grokked_step_{epoch}", slice_state_dict(params, buffers, i), epoch
+                    )
+                break
+
+    except Exception:
+        # Fix 1: mirror BaseTrainer.fit — mark all in-flight members failed and re-raise.
+        tb_str = traceback.format_exc()
+        for writer in writers:
+            update_manifest(writer.run_dir, status="failed", error=tb_str)
+        raise
 
     for i in range(n):
-        writers[i].write_metrics(metrics_rows[i])
         writers[i].finalize(last_metrics[i])
     return [w.run_dir for w in writers]
 
