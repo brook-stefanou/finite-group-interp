@@ -109,3 +109,21 @@ def test_member_writer_output_loads_via_analysis(tmp_path, monkeypatch):
     assert run.metrics[0]["step"] == 0
     assert (writer.run_dir / "checkpoints" / "step_0.pt").exists()
     assert (writer.run_dir / "manifest.json").exists()
+
+
+def test_run_ensemble_produces_one_dir_per_seed(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    from finite_group_interp.training.config import GrokkingConfig
+    from finite_group_interp.training.ensemble import run_ensemble
+
+    cfg = GrokkingConfig(
+        experiment={"name": "ens", "seed": 0, "use_wandb": False},
+        data={"group": "S3", "train_frac": 0.5},
+        optim={"epochs": 50, "log_every": 10, "stop_on_grok": True},
+        ensemble={"enabled": True, "seeds": [1, 2]},
+    )
+    dirs = run_ensemble(cfg)
+    assert len(dirs) == 2
+    for d in dirs:
+        assert (d / "manifest.json").exists()
+        assert (d / "metrics.jsonl").exists()

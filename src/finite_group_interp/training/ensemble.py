@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable
 
 import numpy as np
@@ -7,8 +8,10 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.func import functional_call, grad_and_value, stack_module_state, vmap
 
+from finite_group_interp.groups.catalog import resolve_group
 from finite_group_interp.groups.group import FiniteGroup
 from finite_group_interp.task import build_group_task, train_test_split
+from finite_group_interp.training.batched_adamw import BatchedAdamW
 from finite_group_interp.training.config import GrokkingConfig
 from finite_group_interp.training.logging_jsonl import JSONLLogger
 from finite_group_interp.training.manifest import (
@@ -18,7 +21,7 @@ from finite_group_interp.training.manifest import (
     save_resolved_config,
     update_manifest,
 )
-from finite_group_interp.training.trainer import build_model, set_seed
+from finite_group_interp.training.trainer import build_model, set_seed, should_snapshot
 
 
 @dataclass(frozen=True)
@@ -156,3 +159,87 @@ class MemberWriter:
 
     def finalize(self, final_metrics: dict[str, float]) -> None:
         update_manifest(self.run_dir, status="completed", final_metrics=final_metrics)
+
+
+def _run_one_batch(config: GrokkingConfig, group: FiniteGroup, seeds: list[int]) -> list[Path]:
+    device = config.experiment.device
+    base, params, buffers = stack_seeded_models(config, group, seeds, device)
+    batches = build_seed_batches(group, config.data.train_frac, seeds, device)
+    grad_fn = make_grad_fn(base)
+    eval_fn = make_eval_fn(base)
+
+    opt = BatchedAdamW(
+        params,
+        lr=config.optim.lr,
+        betas=config.optim.betas,
+        eps=1e-8,
+        weight_decay=config.optim.weight_decay,
+    )
+    writers = [MemberWriter(config, s) for s in seeds]
+    metrics_rows: list[list[dict[str, Any]]] = [[] for _ in seeds]
+    last_metrics: list[dict[str, Any]] = [{} for _ in seeds]
+
+    snap = config.snapshot
+    n = len(seeds)
+    last_epoch = config.optim.epochs - 1
+    prev_test_loss = torch.full((n,), float("inf"), device=device)
+    grok_streak = torch.zeros(n, dtype=torch.long, device=device)
+
+    for epoch in range(config.optim.epochs):
+        grads, _ = grad_fn(params, buffers, batches.train_tokens, batches.train_targets)
+        opt.step(params, grads)
+
+        event = torch.zeros(n, dtype=torch.bool, device=device)
+        if epoch % config.optim.log_every == 0 or epoch == last_epoch:
+            tr_loss, tr_acc = eval_fn(params, buffers, batches.train_tokens, batches.train_targets)
+            te_loss, te_acc = eval_fn(params, buffers, batches.test_tokens, batches.test_targets)
+            wn = weight_norms(params)
+            for i in range(n):
+                row = {
+                    "step": epoch,
+                    "train_loss": tr_loss[i].item(),
+                    "train_acc": tr_acc[i].item(),
+                    "test_loss": te_loss[i].item(),
+                    "test_acc": te_acc[i].item(),
+                    "weight_norm": wn[i].item(),
+                }
+                metrics_rows[i].append(row)
+                last_metrics[i] = row
+            if snap.event_based:
+                finite = torch.isfinite(prev_test_loss)
+                rel_drop = (prev_test_loss - te_loss) / prev_test_loss
+                event = finite & (rel_drop > snap.event_rel_drop)
+            prev_test_loss = te_loss
+            grok_streak = torch.where(
+                te_acc >= config.optim.grok_test_acc,
+                grok_streak + 1,
+                torch.zeros_like(grok_streak),
+            )
+
+        if should_snapshot(epoch, snap) or bool(event.any()):
+            for i in range(n):
+                writers[i].save_checkpoint(
+                    f"step_{epoch}", slice_state_dict(params, buffers, i), epoch
+                )
+
+        if config.optim.stop_on_grok and bool((grok_streak >= config.optim.grok_patience).all()):
+            for i in range(n):
+                writers[i].save_checkpoint(
+                    f"grokked_step_{epoch}", slice_state_dict(params, buffers, i), epoch
+                )
+            break
+
+    for i in range(n):
+        writers[i].write_metrics(metrics_rows[i])
+        writers[i].finalize(last_metrics[i])
+    return [w.run_dir for w in writers]
+
+
+def run_ensemble(config: GrokkingConfig) -> list[Path]:
+    group = resolve_group(config.data.group)
+    seeds = list(config.ensemble.seeds)
+    chunk = config.ensemble.chunk_size or len(seeds)
+    out: list[Path] = []
+    for start in range(0, len(seeds), chunk):
+        out.extend(_run_one_batch(config, group, seeds[start : start + chunk]))
+    return out
