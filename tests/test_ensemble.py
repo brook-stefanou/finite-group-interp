@@ -127,3 +127,30 @@ def test_run_ensemble_produces_one_dir_per_seed(tmp_path, monkeypatch):
     for d in dirs:
         assert (d / "manifest.json").exists()
         assert (d / "metrics.jsonl").exists()
+
+
+def test_run_ensemble_entry(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    import importlib.util
+    from pathlib import Path
+
+    repo = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location(
+        "run_ensemble", repo / "scripts" / "run_ensemble.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    dirs = mod.main(
+        [
+            "data.group=S3",
+            "data.train_frac=0.5",
+            "optim.epochs=30",
+            "optim.log_every=10",
+            "optim.stop_on_grok=true",
+            "experiment.use_wandb=false",
+            "ensemble.enabled=true",
+            "ensemble.seeds=[1,2,3]",
+        ]
+    )
+    assert len(dirs) == 3
