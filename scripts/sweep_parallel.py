@@ -22,10 +22,18 @@ def _seeds(default: list[int]) -> list[int]:
     return [int(x) for x in raw.split(",")]
 
 
+def _floats(env_key: str, default: list[float]) -> list[float]:
+    raw = os.environ.get(env_key)
+    if not raw:
+        return default
+    return [float(x) for x in raw.split(",")]
+
+
 GROUPS = os.environ.get("GROUPS", "Dic26,D52").split(",")  # Dic first: slow one starts earliest
 SEEDS = _seeds(list(range(8, 18)))  # local default: 10 new seeds -> 20 runs
-WEIGHT_DECAYS = [1.0]  # matched comparison uses wd1.0 only (Dic is grok-fragile below)
-TRAIN_FRACS = [0.4]
+# Comma-sep overrides, e.g. WEIGHT_DECAYS=1.0,2.0 TRAIN_FRACS=0.5,0.7,0.9 for HP sweeps.
+WEIGHT_DECAYS = _floats("WEIGHT_DECAYS", [1.0])  # default: wd1.0 only (Dic is grok-fragile below)
+TRAIN_FRACS = _floats("TRAIN_FRACS", [0.4])
 EPOCHS = int(os.environ.get("EPOCHS", 80_000))
 STOP_ON_GROK = True
 # ARCH=fc runs the fully-connected baseline (architecture confound). FC runs get
