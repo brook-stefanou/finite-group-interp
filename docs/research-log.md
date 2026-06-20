@@ -109,3 +109,12 @@
 
 - Architecture confound (coset lit is FC, irrep lit transformer): retrained the pair on a 1-hidden-layer FC net (shared embed → concat → ReLU, no biases), 6 seeds/group, same wd. All three findings survive — learnability ~3× split (Dih ~5,600 ep, Dic ~16,100), R² gap null (0.021 vs 0.013, p=0.18), coset ≈0 (Dih +0.05, Dic −0.04). One difference: every Dic seed groks on FC, so the memorisation plateau (6/38 on the transformer) is transformer-specific — here it's purely speed.
 - Coset-null on the very architecture the coset account came from = the most demanding control. Folded into report 02 + README (+ fc- figures); also fixed the C113 headline to 99.77%.
+
+---
+
+## Jun 19
+
+- R² gap is underpowered at n=27: Cohen's d ≈ 0.32, so the p=0.25 null isn't evidence of no effect. Need ~200/group for 90% power; set up a GCP parallel sweep (one seed runs both groups) on existing infrastructure to get there.
+- Confirmed the two accounts use different architectures: the irrep account (Chughtai, Chan & Nanda 2023) is mainline an MLP, the coset account (Stander et al. 2024) a one-hidden-layer FC net. My pair runs are a 1-layer transformer, so the FC baseline (Jun 15) tests the coset account on its own architecture.
+- No same-character-table twin for C13⋊C8 near order 100 (the other dim-4 order-104 group has a different abelianisation). Pivot: probe single-group dynamics for higher dims instead of matched pairs.
+- Added C13⋊C9 (order 117) for the dim-3 rung — 9 linear + 12 degree-3 irreps — between Dih/Dic(104) (dim-2) and C13⋊C8 (dim-4) on the ladder.
