@@ -26,4 +26,13 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy  # strict, zero type-ignores; targets configured in pyproject.toml
-      - run: uv run pytest
+      - run: uv run pytest --cov --cov-report=term-missing
+      # Render the coverage table into the run's job summary. Never gates the
+      # build (no --cov-fail-under); reads the .coverage file pytest just wrote.
+      - name: Coverage summary
+        if: ${{ !cancelled() }}
+        run: |
+          echo '## Coverage' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          uv run coverage report >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
