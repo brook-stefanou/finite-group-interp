@@ -360,6 +360,87 @@ def plot_metric_by_group(
     plt.close(fig)
 
 
+def plot_paired_difference(
+    diffs: list[float],
+    out: Path,
+    *,
+    title: str,
+    ylabel: str,
+    xlabel: str,
+    n_above: int | None = None,
+) -> None:
+    """Per-matched-seed paired difference (group A minus group B) as a jittered
+    strip around a zero reference line, with a mean±std marker.
+
+    The two-strip ``plot_metric_by_group`` view shows each group's marginal
+    spread but hides the WITHIN-seed pairing. This view makes the pairing the
+    point: how many matched seeds favour A over B, and by how much. ``n_above``
+    annotates the count above zero (the sign-test support)."""
+    vals = np.asarray(diffs, dtype=float)
+    n = len(vals)
+    fig, ax = plt.subplots(figsize=(5.2, 4.7), layout="constrained")
+    ax.axhline(0.0, color="#C2C2C2", linestyle=(0, (4, 3)), linewidth=1.0, label="no difference")
+    light = _HIGHLIGHT_COLORS[0]
+    deep = _darken(light)
+    # Deterministic jitter (sorted) => reproducible figure, no RNG.
+    jitter = np.linspace(-0.085, 0.085, n) if n > 1 else np.zeros(1)
+    ax.scatter(
+        -0.13 + jitter,
+        vals,
+        color=light,
+        alpha=0.55,
+        s=46,
+        edgecolor="white",
+        linewidth=0.8,
+        zorder=2,
+    )
+    if n:
+        mean = float(vals.mean())
+        std = float(vals.std(ddof=1)) if n > 1 else 0.0
+        ax.errorbar(
+            0.17,
+            mean,
+            yerr=std,
+            fmt="o",
+            color=deep,
+            markersize=7.5,
+            markeredgecolor="white",
+            markeredgewidth=0.8,
+            capsize=4,
+            elinewidth=1.4,
+            zorder=3,
+        )
+        ax.annotate(
+            f"{mean:+.3f} ± {std:.3f}",
+            (0.17, mean),
+            xytext=(13, 0),
+            textcoords="offset points",
+            va="center",
+            fontsize=10,
+            color=_MUTE,
+        )
+    if n_above is not None:
+        ax.annotate(
+            f"above zero: {n_above}/{n}",
+            xy=(0.02, 0.98),
+            xycoords="axes fraction",
+            va="top",
+            ha="left",
+            fontsize=10,
+            color=_MUTE,
+        )
+    ax.set_xticks([0])
+    ax.set_xticklabels([f"{xlabel}\nn = {n}"])
+    ax.set_xlim(-0.6, 0.95)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.legend(frameon=False, fontsize=10)
+    _style(ax)
+    ax.grid(axis="x", visible=False)
+    fig.savefig(out, dpi=_DPI)
+    plt.close(fig)
+
+
 def plot_functional_form_fve(
     result: FunctionalFormResult, out: Path, title: str = "Functional-form R²"
 ) -> None:
