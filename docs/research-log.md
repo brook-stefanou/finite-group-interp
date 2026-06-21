@@ -118,3 +118,12 @@
 - Confirmed the two accounts use different architectures: the irrep account (Chughtai, Chan & Nanda 2023) is mainline an MLP, the coset account (Stander et al. 2024) a one-hidden-layer FC net. My pair runs are a 1-layer transformer, so the FC baseline (Jun 15) tests the coset account on its own architecture.
 - No same-character-table twin for C13⋊C8 near order 100 (the other dim-4 order-104 group has a different abelianisation). Pivot: probe single-group dynamics for higher dims instead of matched pairs.
 - Added C13⋊C9 (order 117) for the dim-3 rung — 9 linear + 12 degree-3 irreps — between Dih/Dic(104) (dim-2) and C13⋊C8 (dim-4) on the ladder.
+
+---
+
+## Jun 20
+
+- Swept train fraction (0.5/0.7/0.9) and weight decay (1.0/2.0) on the dim-3 (C13⋊C9) and dim-4 (C13⋊C8) groups. Both generalise at train fraction 0.7 and above, neither at 0.5. So higher-dim groups do grok given enough data — the earlier "doesn't generalise within budget" was partly data starvation, not a hard wall. Grok was fast once it happened (tens of thousands of epochs) and weight decay barely mattered; the lever was data.
+- Suspect dim-5 is also held back by model width: a 5-dim irrep sits in a 25-dim isotypic block and d_model is only 64, so it can't hold enough blocks. Not tested yet — only varied data and weight decay so far.
+- Started a bigger cloud run (separate machine) of the Dih/Dic(104) seed sweep, scaling toward ~200 seeds/group, for better power and a cleaner p-value on the R² gap and coset results.
+- Moving the remaining runs to the cloud — the laptop keeps sleeping on battery and stalling the local overnight sweeps.
