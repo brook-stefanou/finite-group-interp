@@ -112,3 +112,26 @@ def onset_epoch(
         if value >= threshold:
             return int(epoch)
     return None
+
+
+def is_grokked(
+    status: str,
+    has_grokked_checkpoint: bool,
+    final_test_acc: float | None,
+    threshold: float = 0.99,
+) -> bool:
+    """The strict grok rule for a finished run.
+
+    A run grokked iff ALL of: its manifest status is ``"completed"`` (a
+    ``"running"`` status means crashed/interrupted, ``"failed"`` means errored);
+    the trainer wrote a ``grokked_step_*.pt`` checkpoint (only done when test_acc
+    >= threshold held for the early-stop patience window); and the final logged
+    test accuracy is itself >= threshold. This is stricter than a transient
+    "any eval hit 0.99" rule -- it requires the grok to have stuck.
+    """
+    return (
+        status == "completed"
+        and has_grokked_checkpoint
+        and final_test_acc is not None
+        and final_test_acc >= threshold
+    )

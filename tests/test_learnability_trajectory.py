@@ -5,6 +5,7 @@ from finite_group_interp.analysis.learnability_trajectory import (
     block_rep_types,
     class_excess_trajectory,
     concentration_index,
+    is_grokked,
     onset_epoch,
 )
 from finite_group_interp.groups.catalog import build_group
@@ -52,6 +53,25 @@ def test_concentration_index_is_total_energy_above_uniform():
     ]
     traj = EnergyTrajectory(epochs=[0, 100], fractions=np.array([[0.5, 0.5], [0.8, 0.2]]))
     assert np.allclose(concentration_index(traj, blocks), [0.0, 0.3])
+
+
+def test_is_grokked_requires_all_three_conditions():
+    # The strict rule: completed status AND a grokked checkpoint AND final
+    # test_acc >= threshold.
+    assert is_grokked(status="completed", has_grokked_checkpoint=True, final_test_acc=0.991)
+    assert is_grokked(status="completed", has_grokked_checkpoint=True, final_test_acc=0.99)
+
+
+def test_is_grokked_rejects_non_completed_status():
+    # "running" = crashed/interrupted; "failed" = errored -- neither grokked.
+    assert not is_grokked(status="running", has_grokked_checkpoint=True, final_test_acc=1.0)
+    assert not is_grokked(status="failed", has_grokked_checkpoint=True, final_test_acc=1.0)
+
+
+def test_is_grokked_rejects_missing_checkpoint_or_low_acc():
+    assert not is_grokked(status="completed", has_grokked_checkpoint=False, final_test_acc=1.0)
+    assert not is_grokked(status="completed", has_grokked_checkpoint=True, final_test_acc=0.98)
+    assert not is_grokked(status="completed", has_grokked_checkpoint=True, final_test_acc=None)
 
 
 def test_class_excess_trajectory_sums_above_baseline_per_label():
