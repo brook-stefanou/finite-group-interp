@@ -145,7 +145,7 @@ def main() -> None:
     ap.add_argument("--shards", type=int, default=9)
     ap.add_argument("--wd", default="wd1.0")
     ap.add_argument("--out", type=Path, default=Path("docs/figures"))
-    ap.add_argument("--tmp", type=Path, default=Path("scratch_pairfig_shards"))
+    ap.add_argument("--tmp", type=Path, default=Path("scratch/pairfig_shards"))
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     args.tmp.mkdir(parents=True, exist_ok=True)

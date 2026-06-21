@@ -78,5 +78,5 @@ sweep*.log
 *.log
 sweep_logs/
 
-# Pair-figure shard scratch (per-seed gap/coset JSON + logs)
-scratch_pairfig*
+# Scratch dir for all transient working artifacts (per-seed shards, logs, ad-hoc outputs)
+scratch/
