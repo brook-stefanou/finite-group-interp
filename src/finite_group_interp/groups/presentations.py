@@ -223,6 +223,19 @@ def build_group(spec: str) -> FiniteGroup:
 
         return GroupGenerators.semidirect_product(c13, c8, _c13_action)
 
+    if spec == "C13sdC9":
+        # C13 ⋊ C9 (order 117): C9 acts on C13 by mult-by-3, an order-3
+        # automorphism (gcd(9, |Aut C13|=12) = 3). 9 linear + 12 degree-3 irreps
+        # -- the dim-3 rung between Dih/Dic(104) (dim-2) and C13sdC8 (dim-4).
+        c13 = GroupGenerators.cyclic_group(13)
+        c9 = GroupGenerators.cyclic_group(9)
+
+        def _c9_action(h: Element, n: Element) -> Element:
+            k = pow(3, c9.el_to_inx(h), 13)
+            return c13.elements[(k * c13.el_to_inx(n)) % 13]
+
+        return GroupGenerators.semidirect_product(c13, c9, _c9_action)
+
     if spec == "Heis5":
         # Heisenberg group over F5: the exponent-5 extraspecial group of order
         # 5^3 = 125. <a, b, c | a^5, b^5, c^5, [a,b]=c, c central>. Its irreps are

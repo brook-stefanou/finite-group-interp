@@ -76,3 +76,7 @@ wandb/
 # Sweep / run logs (local training artifacts)
 sweep*.log
 *.log
+sweep_logs/
+
+# Pair-figure shard scratch (per-seed gap/coset JSON + logs)
+scratch_pairfig*

@@ -22,16 +22,30 @@ def _seeds(default: list[int]) -> list[int]:
     return [int(x) for x in raw.split(",")]
 
 
+def _floats(env_key: str, default: list[float]) -> list[float]:
+    raw = os.environ.get(env_key)
+    if not raw:
+        return default
+    return [float(x) for x in raw.split(",")]
+
+
 GROUPS = os.environ.get("GROUPS", "Dic26,D52").split(",")  # Dic first: slow one starts earliest
 SEEDS = _seeds(list(range(8, 18)))  # local default: 10 new seeds -> 20 runs
-WEIGHT_DECAYS = [1.0]  # matched comparison uses wd1.0 only (Dic is grok-fragile below)
-TRAIN_FRACS = [0.4]
+# Comma-sep overrides, e.g. WEIGHT_DECAYS=1.0,2.0 TRAIN_FRACS=0.5,0.7,0.9 for HP sweeps.
+WEIGHT_DECAYS = _floats("WEIGHT_DECAYS", [1.0])  # default: wd1.0 only (Dic is grok-fragile below)
+TRAIN_FRACS = _floats("TRAIN_FRACS", [0.4])
 EPOCHS = int(os.environ.get("EPOCHS", 80_000))
 STOP_ON_GROK = True
 # ARCH=fc runs the fully-connected baseline (architecture confound). FC runs get
 # an "fc-" name prefix (not "pair-") so the transformer pair figures/compare,
 # which glob "pair-<group>-s", never pick them up.
 ARCH = os.environ.get("ARCH", "transformer")
+
+# Snapshot/log cadence -- defaults preserve prior behaviour; raise both for very
+# long (e.g. 1M-epoch) runs so they don't write million-line metrics or thousands
+# of checkpoints. Event-based snapshotting around grokking stays on regardless.
+SNAPSHOT_INTERVAL = int(os.environ.get("SNAPSHOT_INTERVAL", 1000))
+LOG_EVERY = int(os.environ.get("LOG_EVERY", 1))
 
 # --- parallelism ----------------------------------------------------------
 # Local default tuned for this 10-core Mac (leave a couple for the OS). On a
@@ -66,6 +80,8 @@ def run_one(
         f"optim.weight_decay={wd}",
         f"optim.epochs={EPOCHS}",
         f"optim.stop_on_grok={str(STOP_ON_GROK).lower()}",
+        f"optim.log_every={LOG_EVERY}",
+        f"snapshot.interval={SNAPSHOT_INTERVAL}",
     ]
     started = time.time()
     log_path = LOG_DIR / f"{name}.log"
