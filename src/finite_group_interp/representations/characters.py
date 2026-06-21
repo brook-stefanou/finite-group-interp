@@ -70,6 +70,24 @@ def clean_table(table: np.ndarray, decimals: int = 5) -> np.ndarray:
     return np.round(table, decimals)
 
 
+def frobenius_schur_indicators(group: FiniteGroup) -> np.ndarray:
+    """Frobenius-Schur indicator nu(chi_i) for each irrep, aligned with the
+    rows of :func:`compute_character_table`.
+
+    nu = (1/|G|) sum_g chi_i(g^2), which is +1 for real (orthogonal) irreps,
+    -1 for quaternionic (symplectic) irreps, and 0 for complex irreps. This is
+    the rep-type axis that separates a dihedral group's real 2-d irreps from a
+    dicyclic group's quaternionic 2-d irreps.
+    """
+    table, classes = compute_character_table(group)
+    el_to_class = {el: idx for idx, cls in enumerate(classes) for el in cls}
+    square_class = np.array([el_to_class[group.multiply(g, g)] for g in group.elements], dtype=int)
+    # table[:, square_class] is chi_i(g^2) for every (irrep, element); averaging
+    # over the element axis gives the indicator per irrep in one shot.
+    nu = table[:, square_class].sum(axis=1) / group.order
+    return np.asarray(np.real_if_close(nu, tol=1000).real)
+
+
 def decompose_character(
     reducible_phi: np.ndarray, group: FiniteGroup
 ) -> tuple[dict[int, int], np.ndarray]:
