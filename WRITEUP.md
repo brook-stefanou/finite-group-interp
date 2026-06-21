@@ -18,9 +18,19 @@ To remove characters as a factor I chose groups that have some irreducible repre
 
 The two groups have different subgroup lattices, and their two-dimensional representations are of a different type. The dihedral group has many reflection subgroups, while the dicyclic group has a single involution and a sparser, quaternion-like lattice. Their two-dimensional irreducible representations differ in that the dihedral group's can be written with real matrices while the dicyclic group's cannot. The first of these is what the coset account should be sensitive to, and the second is the kind of thing the irreducible-representation account should see.
 
+| | $D_{52}$ (dihedral) | $\mathrm{Dic}_{26}$ (dicyclic) |
+|---|---|---|
+| Order | 104 | 104 |
+| Irreducible representations | 29 (4 one-dim, 25 two-dim) | 29 (4 one-dim, 25 two-dim) |
+| Character table | shared | shared |
+| Subgroups of order 2 | 53 | 1 |
+| Two-dimensional irrep type | all 25 real | 12 real, 13 quaternionic |
+
+*Everything the character table fixes is identical (the top three rows). The groups differ only below it. The dihedral group's 53 subgroups of order two are its reflections, against the dicyclic group's single involution. And its two-dimensional irreducible representations are all real, where 13 of the dicyclic group's are quaternionic, the axis the headline results turn on.*
+
 ## Summary
 
-I trained the same model on the two groups and applied the instruments. An energy instrument locates which irreducible representations the model concentrates in. The two converged-weight measurements I compare the groups on (coset decodability and the matrix-versus-trace gap) are read against that set, and a third measurement tracks how training unfolds. The clearest difference turned out to be in how hard each group is to learn (the epoch at which it stops memorising and generalises), not in anything I could read off the converged weights. Of the two converged-weight measurements the coset one came back null, while the matrix-versus-trace gap did separate the two groups.
+I trained the same model on the two groups and applied the instruments. An energy instrument locates which irreducible representations the model concentrates in. The two converged-weight measurements I compare the groups on (coset decodability and the matrix-versus-trace gap) are read against that set, and a third measurement tracks how training unfolds. The clearest difference turned out to be in how hard each group is to learn (the epoch at which it stops memorising and generalises), not in anything I could read off the converged weights. Of the two, the coset one came back null, while the matrix-versus-trace gap did separate the two groups.
 
 - **The two groups separate on learnability.** The dicyclic group is reliably slower to generalise than the character-identical dihedral group, and often stays stuck memorising. The dihedral group generalised on 129 of 138 seeds, the dicyclic on 112, with 17 of the dicyclic failures never leaving memorisation. The lag is rep-theoretic. The dicyclic group's quaternionic blocks are the last structure to concentrate, tying the gap to the same real-versus-quaternionic axis as the matrix signature below.
 - **The coset account adds nothing over the irreducible representations.** Measured against a control restricted to the irreducible representations the model actually uses, coset decodability sits at or below zero on every proper normal subgroup (averaging $-0.058$ for the dihedral group and $-0.037$ for the dicyclic), so the coset signal is already accounted for by the irreducible representations.
@@ -33,6 +43,9 @@ I'm confident in the empirical results on this one pair, and all three replicate
 ## Calibrating on C113
 
 Before trusting the instruments on a contested case, I ran them on one where the answer is already known, the cyclic group of order 113 (the setup from Nanda et al.). This isn't evidence for either account since 113 is prime, so the group has no proper subgroups and the coset account has nothing to predict. The point was only to check that the tools report the truth in a case where it has already been established. The model memorises quickly and then generalises at around 15,000 epochs, reaching 99.77% test accuracy.
+
+![Train and test accuracy versus epoch for C113, showing grokking](docs/figures/c113-accuracy.png)
+*Grokking on C113. Train accuracy (grey) reaches 100% within a few hundred epochs while test accuracy (blue) stays near zero, then generalises in a sharp jump at around 15,000 epochs. This long delay between fitting the training data and generalising is the grokking phenomenon the rest of the post relies on.*
 
 The energy instrument finds where the learned structure sits. Each column of the embedding is a function on the group, and that space splits into isotypic blocks, one per irreducible representation. After the model generalises, three of these blocks hold 94% of the embedding's energy, at 14 to 23 times the random-matrix baseline, and every other block sits below baseline. The concentration is causal, not incidental. Ablating any one of the three blocks costs between 9 and 17 nats of test loss, while ablating any other block costs at most 0.05. When restricted to just those three blocks the model keeps 97% test accuracy also. This reproduces the modular-addition result on my own implementation. I built the instrument from the character table rather than tuning it to the cyclic group so the same code runs unchanged on the non-abelian groups later. On those groups it does double duty: the high-energy blocks it picks out are the set of irreps the coset and matrix-versus-trace instruments are then measured against.
 
@@ -67,14 +80,14 @@ The two groups have the same character table, so this difference is sub-characte
 ![Epoch of generalisation by group across 138 seeds](docs/figures/pair-grok-epochs.png)
 *Epoch of generalisation by group across 138 seeds at weight decay 1.0. The dihedral group generalises early and at nearly every seed. The dicyclic group is about twice as slow, and 26 of 138 do not generalise at all, 17 of them stuck in memorisation.*
 
-The trained weights don't explain the gap, but the trajectory does. Running the same energy instrument across the training checkpoints, with the isotypic blocks split by representation type, shows the dicyclic group concentrating its energy later than the dihedral on 90 of the 105 matched seeds, a median of about 8,600 epochs later.
+The trained weights don't explain the gap, but the trajectory does. Running the same energy instrument across the training checkpoints, with the isotypic blocks split by representation type, shows the dicyclic group concentrating its energy later than the dihedral on 90 of the 105 matched seeds, by a median per-seed gap of about 8,600 epochs.
 
 The lag has a rep-theoretic location. Within each dicyclic run, holding the seed and optimiser fixed, the real two-dimensional blocks lock in early, well before the model groks, while the quaternionic blocks are the last structure to form, concentrating at or after the real ones on 94 of 105 seeds, a median of about 10,500 epochs later, right up against the grok point.
 
 So the slow step looks like building the quaternionic blocks, and the dicyclic group has thirteen of those where the dihedral has none. That ties the learnability gap to the same real-versus-quaternionic axis the matrix-versus-trace gap turns on. Like the rest it is correlational: it shows when each block concentrates, not that forming the quaternionic blocks is what holds training up.
 
 ![Energy-concentration onset by representation type across the 105 matched seeds](docs/figures/learnability-trajectory-d64.png)
-*Energy-concentration onset (the epoch reaching half the final energy above uniform) across the 105 matched seeds. Left: the dicyclic group concentrates later than the dihedral on 90 of 105 matched seeds (group medians about 8,000 vs 19,000 epochs), grey lines pairing each seed. Right: within each dicyclic run, relative to its grok point, the real two-dimensional sector locks in well before grokking while the quaternionic sector concentrates at or after it on 94 of 105 seeds, the last structure to form.*
+*Energy-concentration onset (the epoch reaching half the final energy above uniform) across the 105 matched seeds. Top: the dicyclic group concentrates later than the dihedral on 90 of 105 matched seeds, by a median per-seed gap of about 8,600 epochs, grey lines pairing each seed. Bottom: within each dicyclic run, relative to its grok point, the real two-dimensional sector locks in well before grokking while the quaternionic sector concentrates at or after it on 94 of 105 seeds, the last structure to form.*
 
 ## Result 2: cosets add nothing over the irreducible representations
 
@@ -91,12 +104,12 @@ Across all seven proper normal subgroups, and across the 105 seeds where both gr
 
 The matrix-versus-trace $R^2$ gap is the share of the logit variance that the full representation matrices explain beyond what the character alone explains. I expected the two groups to differ on it since a real two-dimensional representation can be written entirely with real-number matrices, whereas a quaternionic one cannot and needs complex entries. A real matrix has fewer independent numbers in it than a complex one, so a network exploiting the real structure has fewer degrees of freedom to encode than one stuck with the complex structure. If the network multiplies representation matrices, the real dihedral group and the quaternionic dicyclic group should leave different fingerprints in how it combines them, and this gap is built to find them.
 
-At 105 matched seeds the gap does separate them. The dihedral mean is 0.063 ($\pm$ 0.061, median 0.043) and the dicyclic 0.038 ($\pm$ 0.050, median 0.014); a Welch t-test gives p = 0.0019, the dihedral gap is the larger of the pair on 70 of the 105 seeds (sign test p = 0.0008), and the paired difference is +0.024 with a 95% bootstrap interval of [+0.009, +0.039]. The effect is modest and the distributions are right-skewed, so the mean separation leans on a tail of high-gap dihedral seeds. But the direction is consistent across seeds, and it is not explained by the dihedral group grokking sooner.
+At 105 matched seeds the gap does separate them. The dihedral mean is 0.063 ($\pm$ 0.061, median 0.043) and the dicyclic 0.038 ($\pm$ 0.050, median 0.014), a Welch t-test giving p = 0.0019. The dihedral gap is the larger of the pair on 70 of the 105 seeds (sign test p = 0.0008), and the paired difference is +0.024 with a 95% bootstrap interval of [+0.009, +0.039]. The effect is modest and the distributions are right-skewed, so the mean separation leans on a tail of high-gap dihedral seeds. But the direction is consistent across seeds, and it is not explained by the dihedral group grokking sooner.
 
 The gap is positive for both groups, so the network does use matrix structure beyond the character, which any model that generalises needs, so the discriminating part is not its presence but that its size differs by representation type. I had expected the two to differ, but my reasoning ran the other way. A real representation needs fewer independent numbers than a quaternionic one, which if anything predicts a smaller dihedral gap. It came out larger, and I don't have a representation-theory explanation for the direction. The instrument is also only correlational: it shows the structure is decodable, not that the network uses it.
 
 ![Matrix-versus-trace R^2 gap by group across 105 matched seeds](docs/figures/pair-fve-gap.png)
-*Matrix-versus-trace $R^2$ gap by group across the 105 matched seeds. The dihedral gap is larger than the dicyclic (means 0.063 and 0.038; larger on 70 of 105 seeds), so the gap distinguishes the groups (Welch p = 0.0019), though both distributions are right-skewed and overlap.*
+*Matrix-versus-trace $R^2$ gap by group across the 105 matched seeds. The dihedral gap is larger than the dicyclic (means 0.063 and 0.038, larger on 70 of 105 seeds), so the gap distinguishes the groups (Welch p = 0.0019), though both distributions are right-skewed and overlap.*
 
 ## A fully-connected baseline
 
@@ -110,7 +123,7 @@ The other two findings replicate as well, and the matrix gap separates the group
 *Epoch of generalisation by group on the fully-connected baseline, 31 seeds each. The dihedral group generalises about three times faster than the dicyclic, the same ordering as on the transformer.*
 
 ![Matrix-versus-trace R^2 gap by group on the fully-connected baseline](docs/figures/fc-fve-gap.png)
-*Matrix-versus-trace $R^2$ gap on the fully-connected baseline across 31 matched seeds. The dihedral gap is larger than the dicyclic (0.021 vs 0.012; larger on 25 of 31 seeds), separating the groups more tightly than on the transformer (Welch p = 0.0005).*
+*Matrix-versus-trace $R^2$ gap on the fully-connected baseline across 31 matched seeds. The dihedral gap is larger than the dicyclic (0.021 vs 0.012, larger on 25 of 31 seeds), separating the groups more tightly than on the transformer (Welch p = 0.0005).*
 
 ## Extending to larger irreducible representations
 

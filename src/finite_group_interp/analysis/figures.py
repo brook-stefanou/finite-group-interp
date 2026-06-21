@@ -25,6 +25,12 @@ from finite_group_interp.analysis.functional_form import FunctionalFormResult  #
 
 _DPI = 300
 
+# Shared authored width (inches). LessWrong rescales every image to one column
+# width, so apparent text/line size is set by font_pt / width_in, not pixels.
+# Holding the width constant across figures keeps that ratio constant, so labels
+# render at the same size on the page. Heights vary with content.
+_FIG_W = 7.0
+
 # Okabe-Ito colorblind-safe palette for significant blocks; grey for the rest.
 _HIGHLIGHT_COLORS = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7", "#0072B2", "#D55E00", "#F0E442"]
 _NEUTRAL = "#B8B8B8"
@@ -112,7 +118,7 @@ def plot_accuracy_curve(metrics: list[dict[str, Any]], out: Path) -> None:
     """Train/test accuracy vs epoch (symlog x), single panel."""
     rows = [m for m in metrics if "test_acc" in m]
     steps = [m["step"] for m in rows]
-    fig, ax = plt.subplots(figsize=(8, 4), layout="constrained")
+    fig, ax = plt.subplots(figsize=(_FIG_W, 4.0), layout="constrained")
     ax.plot(steps, [m["train_acc"] for m in rows], color="#777777", label="train")
     ax.plot(steps, [m["test_acc"] for m in rows], color="#0072B2", label="test")
     ax.set_xscale("symlog")
@@ -193,7 +199,7 @@ def plot_energy_spectrum(
 ) -> None:
     """Per-block energy fractions as bars, random-matrix baseline as a dashed line."""
     hl = highlight if highlight else []
-    fig, ax = plt.subplots(figsize=(10, 4), layout="constrained")
+    fig, ax = plt.subplots(figsize=(_FIG_W, 3.4), layout="constrained")
     _draw_spectrum_panel(ax, spectrum, hl, annotate=True)
     ax.set_title(title)
     ax.legend(frameon=False, fontsize=11)
@@ -210,7 +216,9 @@ def plot_energy_vs_ablation(
 ) -> None:
     """Two stacked panels: top = energy fractions, bottom = delta_loss, block-index order."""
     hl = highlight if highlight else []
-    fig, (ax_top, ax_bot) = plt.subplots(2, 1, figsize=(10, 6), sharex=True, layout="constrained")
+    fig, (ax_top, ax_bot) = plt.subplots(
+        2, 1, figsize=(_FIG_W, 5.0), sharex=True, layout="constrained"
+    )
 
     # Top: energy spectrum
     _draw_spectrum_panel(ax_top, spectrum, hl, annotate=True)

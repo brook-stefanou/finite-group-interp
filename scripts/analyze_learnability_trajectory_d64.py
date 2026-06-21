@@ -156,7 +156,7 @@ _FIG_DPI = 200
 
 
 def make_figure(results: dict[tuple[str, int], RunResult], out: Path) -> None:
-    fig, (axA, axB) = plt.subplots(1, 2, figsize=(12.5, 4.6), layout="constrained")
+    fig, (axA, axB) = plt.subplots(2, 1, figsize=(7.0, 8.4), layout="constrained")
     seeds = sorted({s for (_, s) in results})
 
     # Panel A: matched-seed global concentration onset (Dih vs Dic), one line/seed.
