@@ -127,3 +127,10 @@
 - Suspect dim-5 is also held back by model width: a 5-dim irrep sits in a 25-dim isotypic block and d_model is only 64, so it can't hold enough blocks. Not tested yet — only varied data and weight decay so far.
 - Started a bigger cloud run (separate machine) of the Dih/Dic(104) seed sweep, scaling toward ~200 seeds/group, for better power and a cleaner p-value on the R² gap and coset results.
 - Moving the remaining runs to the cloud — the laptop keeps sleeping on battery and stalling the local overnight sweeps.
+
+---
+
+## Jun 21
+
+- Made the "concentrates in a few isotypic blocks" claim concrete across the full 138-seed wd-1.0 pair sweep (final checkpoint, keep rule = W_E energy fraction > 2× the random baseline, the same set the coset control uses). M = 29 blocks for both groups (4 dim-1 + 25 dim-2, identical since they share a character table); N ≈ 4–5 of 29 — grokked-seed means 4.45 (D52, n=129) / 4.60 (Dic26, n=112), holding ~80% of W_E energy (0.79 / 0.84). Same few-block concentration C113 showed, the instrument transfers to the non-abelian pair, and the kept set is exactly the irrep reference the coset probe is scored against. Outliers track grokking not group: Dic26's stragglers (one N=1, a small N=7/8 tail, conc to 0.13) are all non-grokked memorisers; grokked-only tightens both to N=3–6, conc ≥ 0.69.
+- Folded the N-of-M numbers into report 02 (the "what each hypothesis predicts" irrep bullet); no other docs touched.

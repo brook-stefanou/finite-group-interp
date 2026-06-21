@@ -30,7 +30,7 @@ Dih(104) and Dic(104) break that symmetry the right way. They share a character 
 
 ## What each hypothesis predicts
 
-- **Irrep account:** the embedding concentrates in a few isotypic blocks (as calibrated on C₁₁₃); because the character tables are identical, this concentration looks the *same* for both groups at the character level. Any group difference must show in the *matrix-level* structure — the real-vs-quaternionic distinction the trace cannot see.
+- **Irrep account:** the embedding concentrates in a few isotypic blocks (as calibrated on C₁₁₃) — measured across the pair, W_E loads **~4–5 of the M = 29 blocks** (grokked-seed means 4.4 D52 / 4.6 Dic26; kept = energy fraction > 2× the random baseline), holding ~80% of W_E energy, and that kept set is exactly the irrep reference the coset control is scored against. Because the character tables are identical the 29 blocks are *the same* (4 one-dimensional + 25 two-dimensional irreps for both), so this concentration looks the same for both groups at the character level. Any group difference must show in the *matrix-level* structure — the real-vs-quaternionic distinction the trace cannot see.
 - **Coset account:** the model encodes coset membership for the group's subgroups, decodable from the residual stream *beyond* what the irreps explain, and differing between the two lattices.
 
 The decisive measurements are therefore (a) the matrix-vs-trace **R² gap** (does the readout encode sub-character structure?) and (b) **coset decodability in excess of the irrep control** (is there a coset signal the irreps don't already provide?).
