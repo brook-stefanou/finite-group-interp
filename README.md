@@ -20,7 +20,7 @@ finite-group-interp/
 │   ├── training/           # trainer, config schemas, run manifests, logging
 │   └── analysis/           # checkpoint loading, activation cache, irrep/coset metrics, evidence/verdict harness
 ├── scripts/                # run.py (training), analyze_run.py (irrep analysis)
-├── reports/                # committed research write-ups
+├── WRITEUP.md              # the full research writeup
 ├── tests/                  # 250+ tests incl. mathematical property tests
 └── runs/                   # local run artifacts (gitignored)
 ```
@@ -82,8 +82,8 @@ Across 138 seeds (weight decay 1.0; the matrix-level and coset contrasts taken o
 
 ![Grokking epoch by group across 138 seeds: the dihedral group groks early and reliably, the dicyclic group later and often not at all](docs/figures/pair-grok-epochs.png)
 
-* **The pair separates on learnability.** Dih groks at 129/138 seeds (mean ~22k epochs, none stuck in memorisation — the nine misses are near-threshold at 0.88–0.99); Dic groks at 112/138, much later (mean ~40k), with 17 seeds stuck in pure memorisation (test accuracy < 0.5). The quaternionic group is reliably harder to learn, a sub-character difference, since the character tables are identical.
-* **Cosets add nothing over irreps.** Coset-membership decodability, scored against the model's own kept irreps (the control both prior papers omit), has mean excess ≈ −0.05 across every proper normal subgroup and seed, zero or negative. The naive probe reaches 100%, but so does the irrep control, which is what exposes it as vacuous.
+* **The pair separates on learnability.** Dih groks at 129/138 seeds (mean ~22k epochs, none stuck in memorisation — the nine misses are near-threshold at 0.88–0.99); Dic groks at 112/138, much later (mean ~40k), with 17 seeds stuck in pure memorisation (test accuracy < 0.5). The quaternionic group is reliably harder to learn, a sub-character difference, since the character tables are identical. Tracing energy concentration across training localises the lag to representation type: the dicyclic group's quaternionic blocks are the last structure to form (later onset on 90/105 matched seeds; quaternionic-after-real within-run on 94/105).
+* **Cosets add nothing over irreps.** Coset-membership decodability, scored against the model's own kept irreps (the control both prior papers omit), has mean excess at or below zero on every proper normal subgroup (group means −0.058 Dih and −0.037 Dic across the seven). The naive probe reaches 100%, but so does the irrep control, which is what exposes it as vacuous.
 * **A matrix-level real-vs-quaternionic signature — in the unpredicted direction.** The matrix-vs-trace R² gap *does* separate the groups (Dih 0.063 vs Dic 0.038, Welch p = 0.0019 at n = 105, Dih larger on 70/105), where parameter-counting predicted the real group's gap should be the smaller one. The signature is real and directionally robust but modest, correlational, and currently unexplained.
 
 On this pair, cosets add nothing over irreps, the readout carries an unpredicted representation-type signature, and the cleanest, most seed-stable discriminator is optimisation difficulty. All three findings replicate on a fully-connected baseline (31 seeds per group: Dih groks ~3× faster than Dic, the R²-gap separation is sharper at p = 0.0005, coset excess-over-irrep ≈ 0), so they are not transformer artefacts, and the coset-null holds on the very architecture the coset account was originally read from. Full write-up: [Irreps vs cosets on a same-character-table pair](https://brook-stefanou.github.io/projects/finite-group-interp/).
@@ -102,7 +102,7 @@ The Chughtai/Stander disagreement is a clean instance of the central epistemic p
 
 | | |
 |---|---|
-| Done | Group + representation-theory library, reproducible training pipeline, and per-run evidence/verdict harness; both experiments shipped with write-ups — C₁₁₃ calibration ([report 01](reports/01-c113-calibration.md)) and the Dih(104)/Dic(104) pair across 138 seeds with a fully-connected baseline ([report 02](reports/02-irreps-vs-cosets.md)); full synthesis on the [project page](https://brook-stefanou.github.io/projects/finite-group-interp/) |
+| Done | Group + representation-theory library, reproducible training pipeline, and per-run evidence/verdict harness; both experiments written up end to end in [WRITEUP.md](WRITEUP.md), covering the C₁₁₃ calibration and the Dih(104)/Dic(104) pair across 138 seeds with a fully-connected baseline, with the full synthesis on the [project page](https://brook-stefanou.github.io/projects/finite-group-interp/) |
 | Possible extensions | Causal matrix-vs-trace ablation to test whether the representation-type signature is used; dim ≥ 3 dynamics (C₁₃⋊C₉, C₁₃⋊C₈ grok given enough data); the order-125 dim-5 regime is likely width-bound (Heisenberg/F₅ did not grok) and parked |
 
 ---
