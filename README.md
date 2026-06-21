@@ -21,7 +21,7 @@ finite-group-interp/
 │   └── analysis/           # checkpoint loading, activation cache, irrep/coset metrics, evidence/verdict harness
 ├── scripts/                # run.py (training), analyze_run.py (irrep analysis)
 ├── WRITEUP.md              # the full research writeup
-├── tests/                  # 250+ tests incl. mathematical property tests
+├── tests/                  # 277 tests incl. mathematical property tests
 └── runs/                   # local run artifacts (gitignored)
 ```
 
@@ -57,7 +57,7 @@ The published evidence on both sides is character-level: correlations between mo
 * **Groups of order < 20 do not generalise.** Across S₃, Q₈, A₄, C₈ × weight-decay sweeps (150k epochs), every model memorised the training set quickly and stayed at chance test accuracy. The dataset is the bottleneck (|G|² ≤ 361 examples), not optimisation — so small groups are learning a lookup table, not the group operation, and any "algorithm" read off them would be an artefact. The investigation therefore runs on groups of order ≈ 100–350.
 * **The pipeline reproduces the canonical grokking result.** C₁₁₃ (modular addition) groks cleanly: train fraction 0.3, 30k epochs, 99.77% test accuracy, with dense checkpoints captured through the transition.
 * **C₁₁₃ is calibration, not evidence in the debate.** 113 is prime, so C₁₁₃ has no proper subgroups: the coset hypothesis is vacuous here and cannot make a competing prediction. Replicating the known irrep signature on this run checks the measurement tools against an established answer. Only the same-character-table pairs below can adjudicate between the hypotheses.
-* **The signature replicates, and it is causal.** Three isotypic blocks hold 94% of the embedding's energy (14–23× the random baseline); ablating any one costs 9–17 nats of test loss, while the other 53 blocks sit at a 0.05-nat noise floor; the model restricted to those three blocks keeps 97.4% accuracy. All of this was predicted in the [research log](docs/research-log.md) before the analysis ran. Full write-up: [the project page](https://brook-stefanou.github.io/projects/finite-group-interp/).
+* **The signature replicates, and it is causal.** Three isotypic blocks hold 94% of the embedding's energy (14–23× the random baseline); ablating any one costs 9–17 nats of test loss, while the other 54 blocks sit at a 0.05-nat noise floor; the model restricted to those three blocks keeps 97.4% accuracy. All of this was predicted in the [research log](docs/research-log.md) before the analysis ran. Full write-up: [the project page](https://brook-stefanou.github.io/projects/finite-group-interp/).
 
 ![Isotypic energy across training: diffuse during memorisation, concentrating into three isotypic blocks exactly at the grokking transition](docs/figures/c113-energy-trajectory.png)
 
