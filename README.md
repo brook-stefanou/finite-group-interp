@@ -1,4 +1,6 @@
-# finite-group-interp
+# How a network learns a finite group: irreps vs cosets, tested on a same-character-table pair
+
+by **[Brook Stefanou](https://brookstefanou.com)**
 
 ![CI](https://github.com/brook-stefanou/finite-group-interp/actions/workflows/ci.yml/badge.svg)
 
