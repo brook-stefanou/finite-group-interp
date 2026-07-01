@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from finite_group_interp.analysis.irrep_metrics import (
+from same_character_table_interp.analysis.irrep_metrics import (
     block_ablation,
     energy_trajectory,
     evaluate,
@@ -10,11 +10,11 @@ from finite_group_interp.analysis.irrep_metrics import (
     restricted_loss,
     weight_as_functions,
 )
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.representations.projectors import real_isotypic_blocks
-from finite_group_interp.task import build_group_task
-from finite_group_interp.training.config import ExperimentConfig, GrokkingConfig
-from finite_group_interp.training.trainer import build_model
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.representations.projectors import real_isotypic_blocks
+from same_character_table_interp.task import build_group_task
+from same_character_table_interp.training.config import ExperimentConfig, GrokkingConfig
+from same_character_table_interp.training.trainer import build_model
 
 
 def _c8_blocks():

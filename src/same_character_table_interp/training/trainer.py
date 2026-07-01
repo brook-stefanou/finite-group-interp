@@ -8,10 +8,10 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.groups.group import FiniteGroup
-from finite_group_interp.model import FCModel, GroupModel, OneLayerTransformer
-from finite_group_interp.task import build_group_task, train_test_split
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.groups.group import FiniteGroup
+from same_character_table_interp.model import FCModel, GroupModel, OneLayerTransformer
+from same_character_table_interp.task import build_group_task, train_test_split
 
 from .config import BaseConfig, GrokkingConfig, SnapshotConfig
 from .logging_jsonl import JSONLLogger

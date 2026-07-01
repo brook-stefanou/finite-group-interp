@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from finite_group_interp.groups.group import FiniteGroup
+from same_character_table_interp.groups.group import FiniteGroup
 
 
 @dataclass(frozen=True)

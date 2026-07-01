@@ -3,7 +3,7 @@ import cmath
 import numpy as np
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from finite_group_interp.groups.group import Element, FiniteGroup
+from same_character_table_interp.groups.group import Element, FiniteGroup
 
 
 class Representation(BaseModel):

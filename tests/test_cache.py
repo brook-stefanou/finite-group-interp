@@ -1,8 +1,8 @@
 import pytest
 import torch
 
-from finite_group_interp.analysis.cache import ActivationCache, forward_with_cache
-from finite_group_interp.model import OneLayerTransformer
+from same_character_table_interp.analysis.cache import ActivationCache, forward_with_cache
+from same_character_table_interp.model import OneLayerTransformer
 
 
 def _model() -> OneLayerTransformer:
@@ -48,7 +48,7 @@ def test_wrapper_restores_training_mode():
 
 
 def test_activation_cache_is_reexported():
-    from finite_group_interp.model import ActivationCache as source
+    from same_character_table_interp.model import ActivationCache as source
 
     assert ActivationCache is source
 

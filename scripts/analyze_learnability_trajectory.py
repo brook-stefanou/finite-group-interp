@@ -29,21 +29,21 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 
-from finite_group_interp.analysis import figures as figs  # applies pub theme on import
-from finite_group_interp.analysis.irrep_metrics import (
+from same_character_table_interp.analysis import figures as figs  # applies pub theme on import
+from same_character_table_interp.analysis.irrep_metrics import (
     energy_trajectory,
     isotypic_energy,
     weight_as_functions,
 )
-from finite_group_interp.analysis.learnability_trajectory import (
+from same_character_table_interp.analysis.learnability_trajectory import (
     block_rep_types,
     class_excess_trajectory,
     concentration_index,
     onset_epoch,
 )
-from finite_group_interp.analysis.loading import load_run
-from finite_group_interp.groups.presentations import build_group
-from finite_group_interp.representations.projectors import real_isotypic_blocks
+from same_character_table_interp.analysis.loading import load_run
+from same_character_table_interp.groups.presentations import build_group
+from same_character_table_interp.representations.projectors import real_isotypic_blocks
 
 GROK = 0.99
 # Display names + the FS-typed sector each group contributes to question (b).

@@ -2,7 +2,7 @@ import einops
 import pytest
 import torch
 
-from finite_group_interp.model import OneLayerTransformer
+from same_character_table_interp.model import OneLayerTransformer
 
 # Weight names the analysis layer relies on (the "contract").
 CONTRACT = {"W_E", "W_pos", "W_Q", "W_K", "W_V", "W_O", "W_in", "W_out", "W_U"}

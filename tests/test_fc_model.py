@@ -10,18 +10,18 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.groups.group import FiniteGroup
-from finite_group_interp.model import FCModel, OneLayerTransformer
-from finite_group_interp.task import build_group_task
-from finite_group_interp.training.config import (
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.groups.group import FiniteGroup
+from same_character_table_interp.model import FCModel, OneLayerTransformer
+from same_character_table_interp.task import build_group_task
+from same_character_table_interp.training.config import (
     DataConfig,
     ExperimentConfig,
     GrokkingConfig,
     ModelConfig,
     OptimConfig,
 )
-from finite_group_interp.training.trainer import build_model
+from same_character_table_interp.training.trainer import build_model
 
 
 def _config(arch: str, group: str = "C4") -> GrokkingConfig:

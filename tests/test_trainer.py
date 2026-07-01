@@ -3,16 +3,16 @@ import json
 import numpy as np
 import torch
 
-from finite_group_interp.task import build_group_task, train_test_split
-from finite_group_interp.training.config import ExperimentConfig
-from finite_group_interp.training.config import (
+from same_character_table_interp.task import build_group_task, train_test_split
+from same_character_table_interp.training.config import ExperimentConfig
+from same_character_table_interp.training.config import (
     DataConfig,
     GrokkingConfig,
     ModelConfig,
     OptimConfig,
 )
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.training.trainer import GroupGrokkingTrainer, build_model
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.training.trainer import GroupGrokkingTrainer, build_model
 
 
 def _config(group="C4", train_frac=0.8, epochs=300, weight_decay=1.0, log_every=1):

@@ -1,15 +1,18 @@
 import numpy as np
 
-from finite_group_interp.analysis.irrep_metrics import EnergyTrajectory
-from finite_group_interp.analysis.learnability_trajectory import (
+from same_character_table_interp.analysis.irrep_metrics import EnergyTrajectory
+from same_character_table_interp.analysis.learnability_trajectory import (
     block_rep_types,
     class_excess_trajectory,
     concentration_index,
     is_grokked,
     onset_epoch,
 )
-from finite_group_interp.groups.catalog import build_group
-from finite_group_interp.representations.projectors import IsotypicBlock, real_isotypic_blocks
+from same_character_table_interp.groups.catalog import build_group
+from same_character_table_interp.representations.projectors import (
+    IsotypicBlock,
+    real_isotypic_blocks,
+)
 
 
 def test_onset_epoch_returns_first_epoch_reaching_half_of_final():

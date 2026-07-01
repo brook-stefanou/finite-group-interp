@@ -16,7 +16,7 @@ from typing import Any, Literal
 import numpy as np
 import torch
 
-from finite_group_interp.analysis.figures import (
+from same_character_table_interp.analysis.figures import (
     plot_accuracy_curve,
     plot_energy_spectrum,
     plot_energy_trajectory,
@@ -24,8 +24,8 @@ from finite_group_interp.analysis.figures import (
     plot_functional_form_fve,
     plot_loss_curve,
 )
-from finite_group_interp.analysis.functional_form import functional_form_fit
-from finite_group_interp.analysis.irrep_metrics import (
+from same_character_table_interp.analysis.functional_form import functional_form_fit
+from same_character_table_interp.analysis.irrep_metrics import (
     EnergySpectrum,
     block_ablation,
     energy_trajectory,
@@ -34,19 +34,22 @@ from finite_group_interp.analysis.irrep_metrics import (
     restricted_loss,
     weight_as_functions,
 )
-from finite_group_interp.analysis.loading import (
+from same_character_table_interp.analysis.loading import (
     LoadedCheckpoint,
     list_checkpoints,
     load_checkpoint,
     load_run,
     step_of,
 )
-from finite_group_interp.model import GroupModel
-from finite_group_interp.training.manifest import get_git_commit
-from finite_group_interp.groups.group import FiniteGroup
-from finite_group_interp.representations.irreps import extract_irreps
-from finite_group_interp.representations.projectors import IsotypicBlock, real_isotypic_blocks
-from finite_group_interp.task import build_group_task, train_test_split
+from same_character_table_interp.model import GroupModel
+from same_character_table_interp.training.manifest import get_git_commit
+from same_character_table_interp.groups.group import FiniteGroup
+from same_character_table_interp.representations.irreps import extract_irreps
+from same_character_table_interp.representations.projectors import (
+    IsotypicBlock,
+    real_isotypic_blocks,
+)
+from same_character_table_interp.task import build_group_task, train_test_split
 
 HEADLINE_FIGURES = (
     "accuracy.png",

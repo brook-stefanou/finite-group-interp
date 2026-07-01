@@ -1,8 +1,8 @@
 import numpy as np
 
-from finite_group_interp.groups.generators import GroupGenerators
-from finite_group_interp.representations.characters import compute_character_table
-from finite_group_interp.representations.projectors import (
+from same_character_table_interp.groups.generators import GroupGenerators
+from same_character_table_interp.representations.characters import compute_character_table
+from same_character_table_interp.representations.projectors import (
     isotypic_projectors,
     real_isotypic_blocks,
 )

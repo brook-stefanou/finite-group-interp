@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from finite_group_interp.groups.generators import GroupGenerators
-from finite_group_interp.representations.core import Representation
+from same_character_table_interp.groups.generators import GroupGenerators
+from same_character_table_interp.representations.core import Representation
 
 
 def test_regular_representation_is_valid():

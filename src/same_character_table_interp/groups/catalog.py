@@ -15,9 +15,9 @@ Built for training sweeps over every group of a given order:
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from finite_group_interp.groups.generators import GroupGenerators
-from finite_group_interp.groups.group import FiniteGroup
-from finite_group_interp.groups.presentations import build_group, from_presentation
+from same_character_table_interp.groups.generators import GroupGenerators
+from same_character_table_interp.groups.group import FiniteGroup
+from same_character_table_interp.groups.presentations import build_group, from_presentation
 
 
 @dataclass(frozen=True)

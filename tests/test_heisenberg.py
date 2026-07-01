@@ -7,8 +7,8 @@ matrix-vs-trace FVE gap washed out. This test pins the construction down BEFORE 
 spend hours training, so we never train the wrong group.
 """
 
-from finite_group_interp.groups.presentations import build_group
-from finite_group_interp.representations.characters import compute_character_table
+from same_character_table_interp.groups.presentations import build_group
+from same_character_table_interp.representations.characters import compute_character_table
 
 
 def _element_orders(group) -> list[int]:

@@ -1,4 +1,4 @@
-from finite_group_interp.analysis.compare import evidence_rows, comparison_csv
+from same_character_table_interp.analysis.compare import evidence_rows, comparison_csv
 
 
 def _ev(

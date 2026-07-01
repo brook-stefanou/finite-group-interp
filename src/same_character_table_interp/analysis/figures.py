@@ -16,12 +16,12 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import seaborn as sns  # noqa: E402
 
-from finite_group_interp.analysis.irrep_metrics import (  # noqa: E402
+from same_character_table_interp.analysis.irrep_metrics import (  # noqa: E402
     AblationResult,
     EnergySpectrum,
     EnergyTrajectory,
 )
-from finite_group_interp.analysis.functional_form import FunctionalFormResult  # noqa: E402
+from same_character_table_interp.analysis.functional_form import FunctionalFormResult  # noqa: E402
 
 _DPI = 300
 

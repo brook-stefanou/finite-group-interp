@@ -8,7 +8,7 @@ this and call ``model(tokens, return_cache=True)`` directly.
 
 import torch
 
-from finite_group_interp.model import ActivationCache, GroupModel
+from same_character_table_interp.model import ActivationCache, GroupModel
 
 __all__ = ["ActivationCache", "forward_with_cache"]
 

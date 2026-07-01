@@ -9,20 +9,20 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.func import functional_call, grad_and_value, stack_module_state, vmap
 
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.groups.group import FiniteGroup
-from finite_group_interp.task import build_group_task, train_test_split
-from finite_group_interp.training.batched_adamw import BatchedAdamW
-from finite_group_interp.training.config import GrokkingConfig
-from finite_group_interp.training.logging_jsonl import JSONLLogger
-from finite_group_interp.training.manifest import (
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.groups.group import FiniteGroup
+from same_character_table_interp.task import build_group_task, train_test_split
+from same_character_table_interp.training.batched_adamw import BatchedAdamW
+from same_character_table_interp.training.config import GrokkingConfig
+from same_character_table_interp.training.logging_jsonl import JSONLLogger
+from same_character_table_interp.training.manifest import (
     create_manifest,
     create_run_dir,
     create_run_id,
     save_resolved_config,
     update_manifest,
 )
-from finite_group_interp.training.trainer import build_model, set_seed, should_snapshot
+from same_character_table_interp.training.trainer import build_model, set_seed, should_snapshot
 
 
 @dataclass(frozen=True)

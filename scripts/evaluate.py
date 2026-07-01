@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-from finite_group_interp.analysis.evidence import run_all
+from same_character_table_interp.analysis.evidence import run_all
 
 
 def main() -> None:

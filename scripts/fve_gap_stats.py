@@ -16,7 +16,11 @@ mean+/-std and p-value into report 02's FVE-gap section.
 import sys
 from pathlib import Path
 
-from finite_group_interp.analysis.fve_gap_stats import gaps_from_csv, parse_fve_gaps, summarize
+from same_character_table_interp.analysis.fve_gap_stats import (
+    gaps_from_csv,
+    parse_fve_gaps,
+    summarize,
+)
 
 
 def main(argv: list[str]) -> None:

@@ -3,7 +3,7 @@ from torch.testing import assert_close
 
 
 def test_batched_adamw_matches_torch_per_slice():
-    from finite_group_interp.training.batched_adamw import BatchedAdamW
+    from same_character_table_interp.training.batched_adamw import BatchedAdamW
 
     torch.manual_seed(0)
     N, shape = 3, (4, 5)

@@ -16,7 +16,7 @@ from collections.abc import Callable
 
 import numpy as np
 
-from finite_group_interp.groups.group import Element, FiniteGroup
+from same_character_table_interp.groups.group import Element, FiniteGroup
 
 
 def _parse_symbols(generators: str) -> dict[str, int]:
@@ -205,7 +205,7 @@ def build_group(spec: str) -> FiniteGroup:
     four-group is available as ``"D2"``.
     """
     # Local import avoids a module-level cycle (generators imports group only).
-    from finite_group_interp.groups.generators import GroupGenerators
+    from same_character_table_interp.groups.generators import GroupGenerators
 
     spec = spec.strip()
 

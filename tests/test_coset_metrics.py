@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from finite_group_interp.analysis.coset_metrics import (
+from same_character_table_interp.analysis.coset_metrics import (
     CosetResult,
     _all_pairs_resid,
     _irrep_features,
@@ -15,10 +15,10 @@ from finite_group_interp.analysis.coset_metrics import (
     fit_linear_probe,
     random_partition_null,
 )
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.representations.irreps import extract_irreps
-from finite_group_interp.training.config import ExperimentConfig, GrokkingConfig
-from finite_group_interp.training.trainer import build_model
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.representations.irreps import extract_irreps
+from same_character_table_interp.training.config import ExperimentConfig, GrokkingConfig
+from same_character_table_interp.training.trainer import build_model
 
 
 def test_coset_labels_match_left_coset_partition():

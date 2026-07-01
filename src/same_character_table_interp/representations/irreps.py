@@ -19,10 +19,10 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from finite_group_interp.groups.group import Element, FiniteGroup
-from finite_group_interp.representations.characters import compute_character_table
-from finite_group_interp.representations.core import Representation
-from finite_group_interp.representations.projectors import isotypic_projectors
+from same_character_table_interp.groups.group import Element, FiniteGroup
+from same_character_table_interp.representations.characters import compute_character_table
+from same_character_table_interp.representations.core import Representation
+from same_character_table_interp.representations.projectors import isotypic_projectors
 
 
 @dataclass(frozen=True)

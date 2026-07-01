@@ -5,11 +5,11 @@ import numpy as np
 import pytest
 import torch
 
-from finite_group_interp.analysis.loading import list_checkpoints, load_checkpoint, load_run
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.task import build_group_task, train_test_split
-from finite_group_interp.training.config import ExperimentConfig, GrokkingConfig
-from finite_group_interp.training.trainer import build_model
+from same_character_table_interp.analysis.loading import list_checkpoints, load_checkpoint, load_run
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.task import build_group_task, train_test_split
+from same_character_table_interp.training.config import ExperimentConfig, GrokkingConfig
+from same_character_table_interp.training.trainer import build_model
 
 
 def _config(group: str = "C8") -> GrokkingConfig:
@@ -98,7 +98,7 @@ def test_load_checkpoint_not_a_trainer_payload_raises(tmp_path):
 
 
 def test_load_checkpoint_round_trips_no_mlp_model(tmp_path):
-    from finite_group_interp.training.config import ModelConfig
+    from same_character_table_interp.training.config import ModelConfig
 
     config = GrokkingConfig(
         experiment=ExperimentConfig(name="t", seed=0, use_wandb=False),

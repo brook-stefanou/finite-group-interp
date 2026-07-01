@@ -6,9 +6,9 @@ from torch.testing import assert_close
 
 
 def test_seed_batches_match_train_test_split():
-    from finite_group_interp.groups.catalog import resolve_group
-    from finite_group_interp.task import build_group_task, train_test_split
-    from finite_group_interp.training.ensemble import build_seed_batches
+    from same_character_table_interp.groups.catalog import resolve_group
+    from same_character_table_interp.task import build_group_task, train_test_split
+    from same_character_table_interp.training.ensemble import build_seed_batches
 
     group = resolve_group("S3")  # small, order 6 -> O^2 = 36
     seeds = [7, 11]
@@ -26,10 +26,10 @@ def test_seed_batches_match_train_test_split():
 
 
 def test_stacked_init_matches_single_build_model():
-    from finite_group_interp.groups.catalog import resolve_group
-    from finite_group_interp.training.config import GrokkingConfig
-    from finite_group_interp.training.trainer import build_model, set_seed
-    from finite_group_interp.training.ensemble import stack_seeded_models
+    from same_character_table_interp.groups.catalog import resolve_group
+    from same_character_table_interp.training.config import GrokkingConfig
+    from same_character_table_interp.training.trainer import build_model, set_seed
+    from same_character_table_interp.training.ensemble import stack_seeded_models
 
     cfg = GrokkingConfig(experiment={"name": "x", "seed": 0}, data={"group": "S3"})
     group = resolve_group("S3")
@@ -46,10 +46,10 @@ def test_stacked_init_matches_single_build_model():
 
 def test_batched_first_step_matches_single_run():
     import torch.nn.functional as F
-    from finite_group_interp.groups.catalog import resolve_group
-    from finite_group_interp.training.config import GrokkingConfig
-    from finite_group_interp.training.trainer import build_model, set_seed
-    from finite_group_interp.training.ensemble import (
+    from same_character_table_interp.groups.catalog import resolve_group
+    from same_character_table_interp.training.config import GrokkingConfig
+    from same_character_table_interp.training.trainer import build_model, set_seed
+    from same_character_table_interp.training.ensemble import (
         build_seed_batches,
         stack_seeded_models,
         make_grad_fn,
@@ -77,14 +77,14 @@ def test_batched_first_step_matches_single_run():
 
 def test_member_writer_output_loads_via_analysis(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)  # run dirs are created under ./runs
-    from finite_group_interp.groups.catalog import resolve_group
-    from finite_group_interp.training.config import GrokkingConfig
-    from finite_group_interp.training.ensemble import (
+    from same_character_table_interp.groups.catalog import resolve_group
+    from same_character_table_interp.training.config import GrokkingConfig
+    from same_character_table_interp.training.ensemble import (
         MemberWriter,
         slice_state_dict,
         stack_seeded_models,
     )
-    from finite_group_interp.analysis.loading import load_run  # see Step 3 note
+    from same_character_table_interp.analysis.loading import load_run  # see Step 3 note
 
     cfg = GrokkingConfig(experiment={"name": "x", "seed": 0}, data={"group": "S3"})
     group = resolve_group("S3")
@@ -115,8 +115,8 @@ def test_member_writer_output_loads_via_analysis(tmp_path, monkeypatch):
 
 def test_run_ensemble_produces_one_dir_per_seed(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    from finite_group_interp.training.config import GrokkingConfig
-    from finite_group_interp.training.ensemble import run_ensemble
+    from same_character_table_interp.training.config import GrokkingConfig
+    from same_character_table_interp.training.ensemble import run_ensemble
 
     cfg = GrokkingConfig(
         experiment={"name": "ens", "seed": 0, "use_wandb": False},
@@ -137,9 +137,9 @@ def _read_metrics(run_dir):
 
 def test_single_vs_batched_seed_for_seed_cpu(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    from finite_group_interp.training.cli import build_config
-    from finite_group_interp.training.trainer import GroupGrokkingTrainer
-    from finite_group_interp.training.ensemble import run_ensemble
+    from same_character_table_interp.training.cli import build_config
+    from same_character_table_interp.training.trainer import GroupGrokkingTrainer
+    from same_character_table_interp.training.ensemble import run_ensemble
 
     common = [
         "data.group=S3",

@@ -2,7 +2,12 @@ from collections import defaultdict
 
 import pytest
 
-from finite_group_interp.groups.catalog import CATALOG, all_groups, build_from_id, resolve_group
+from same_character_table_interp.groups.catalog import (
+    CATALOG,
+    all_groups,
+    build_from_id,
+    resolve_group,
+)
 
 # Known number of groups per order (the classification we must reproduce).
 # Extended order-by-order as the catalog is populated.

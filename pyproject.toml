@@ -1,5 +1,5 @@
 [project]
-name = "finite-group-interp"
+name = "same-character-table-interp"
 version = "0.1.0"
 description = "What algorithm does a neural network learn for finite group multiplication? Mechanistic interpretability of grokking on group operations."
 readme = "README.md"
@@ -30,7 +30,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/finite_group_interp"]
+packages = ["src/same_character_table_interp"]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -75,7 +75,7 @@ addopts = "-v --tb=short"
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = ["finite_group_interp"]
+source = ["same_character_table_interp"]
 branch = true
 
 [tool.coverage.report]

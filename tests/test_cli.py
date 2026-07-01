@@ -1,4 +1,4 @@
-from finite_group_interp.training.cli import build_config
+from same_character_table_interp.training.cli import build_config
 
 
 def test_overrides_are_applied():

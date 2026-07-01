@@ -1,8 +1,8 @@
 import numpy as np
 
-from finite_group_interp.groups.catalog import build_group
-from finite_group_interp.groups.generators import GroupGenerators
-from finite_group_interp.representations.characters import (
+from same_character_table_interp.groups.catalog import build_group
+from same_character_table_interp.groups.generators import GroupGenerators
+from same_character_table_interp.representations.characters import (
     compute_character_table,
     decompose_character,
     frobenius_schur_indicators,

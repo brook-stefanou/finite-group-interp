@@ -35,17 +35,20 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 
-from finite_group_interp.analysis import figures as figs  # applies pub theme on import
-from finite_group_interp.analysis.irrep_metrics import energy_trajectory
-from finite_group_interp.analysis.learnability_trajectory import (
+from same_character_table_interp.analysis import figures as figs  # applies pub theme on import
+from same_character_table_interp.analysis.irrep_metrics import energy_trajectory
+from same_character_table_interp.analysis.learnability_trajectory import (
     block_rep_types,
     class_excess_trajectory,
     concentration_index,
     is_grokked,
     onset_epoch,
 )
-from finite_group_interp.groups.presentations import build_group
-from finite_group_interp.representations.projectors import IsotypicBlock, real_isotypic_blocks
+from same_character_table_interp.groups.presentations import build_group
+from same_character_table_interp.representations.projectors import (
+    IsotypicBlock,
+    real_isotypic_blocks,
+)
 
 GROK_THRESHOLD = 0.99
 MIN_CHECKPOINTS = 10  # below this the 50%-of-final onset crossing is unreliable

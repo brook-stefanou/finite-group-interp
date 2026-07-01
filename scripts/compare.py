@@ -3,7 +3,11 @@
 import argparse
 from pathlib import Path
 
-from finite_group_interp.analysis.compare import comparison_csv, comparison_markdown, load_evidences
+from same_character_table_interp.analysis.compare import (
+    comparison_csv,
+    comparison_markdown,
+    load_evidences,
+)
 
 
 def main() -> None:

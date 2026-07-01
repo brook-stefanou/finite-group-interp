@@ -1,6 +1,6 @@
 import numpy as np
 
-from finite_group_interp.groups.group import Element, FiniteGroup
+from same_character_table_interp.groups.group import Element, FiniteGroup
 
 
 def compute_character_table(group: FiniteGroup) -> tuple[np.ndarray, list[list[Element]]]:

@@ -544,7 +544,7 @@ wheels = [
 ]
 
 [[package]]
-name = "finite-group-interp"
+name = "same-character-table-interp"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

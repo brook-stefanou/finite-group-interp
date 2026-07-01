@@ -18,7 +18,7 @@ class ExperimentConfig(BaseModel):
     device: str = "cpu"  # cpu is deterministic and fast for small models; "mps"/"cuda" to override
     deterministic: bool = True  # enable torch deterministic algorithms for reproducible runs
     use_wandb: bool = True  # experiment tracking on by default; tests/CI set WANDB_MODE=disabled
-    wandb_project: str = "finite-group-interp"
+    wandb_project: str = "same-character-table-interp"
     wandb_entity: str | None = None
 
 

@@ -17,9 +17,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from finite_group_interp.analysis.loading import list_checkpoints, load_checkpoint
-from finite_group_interp.model import GroupModel
-from finite_group_interp.representations.projectors import IsotypicBlock
+from same_character_table_interp.analysis.loading import list_checkpoints, load_checkpoint
+from same_character_table_interp.model import GroupModel
+from same_character_table_interp.representations.projectors import IsotypicBlock
 
 
 @dataclass(frozen=True)

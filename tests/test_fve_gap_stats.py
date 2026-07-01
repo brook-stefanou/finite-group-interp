@@ -7,7 +7,7 @@ re-run compare_pairs once, pipe the log through here, drop mean+/-std + p into t
 report stub.
 """
 
-from finite_group_interp.analysis.fve_gap_stats import (
+from same_character_table_interp.analysis.fve_gap_stats import (
     betainc_reg,
     gaps_from_csv,
     parse_fve_gaps,

@@ -1,6 +1,6 @@
 import numpy as np
 
-from finite_group_interp.analysis.figures import (
+from same_character_table_interp.analysis.figures import (
     plot_accuracy_curve,
     plot_energy_spectrum,
     plot_energy_trajectory,
@@ -8,7 +8,7 @@ from finite_group_interp.analysis.figures import (
     plot_loss_curve,
     plot_metric_by_group,
 )
-from finite_group_interp.analysis.irrep_metrics import (
+from same_character_table_interp.analysis.irrep_metrics import (
     AblationResult,
     EnergySpectrum,
     EnergyTrajectory,

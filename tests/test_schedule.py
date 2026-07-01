@@ -1,5 +1,5 @@
-from finite_group_interp.training.config import SnapshotConfig
-from finite_group_interp.training.trainer import should_snapshot
+from same_character_table_interp.training.config import SnapshotConfig
+from same_character_table_interp.training.trainer import should_snapshot
 
 
 def test_initial_step_is_always_snapshotted():

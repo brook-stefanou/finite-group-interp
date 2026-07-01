@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from finite_group_interp.groups.generators import GroupGenerators
-from finite_group_interp.task import build_group_task, train_test_split
+from same_character_table_interp.groups.generators import GroupGenerators
+from same_character_table_interp.task import build_group_task, train_test_split
 
 
 def test_task_has_every_ordered_pair_once():

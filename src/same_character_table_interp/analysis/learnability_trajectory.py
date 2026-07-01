@@ -20,10 +20,13 @@ from collections.abc import Sequence
 
 import numpy as np
 
-from finite_group_interp.analysis.irrep_metrics import EnergyTrajectory
-from finite_group_interp.groups.group import FiniteGroup
-from finite_group_interp.representations.characters import frobenius_schur_indicators
-from finite_group_interp.representations.projectors import IsotypicBlock, real_isotypic_blocks
+from same_character_table_interp.analysis.irrep_metrics import EnergyTrajectory
+from same_character_table_interp.groups.group import FiniteGroup
+from same_character_table_interp.representations.characters import frobenius_schur_indicators
+from same_character_table_interp.representations.projectors import (
+    IsotypicBlock,
+    real_isotypic_blocks,
+)
 
 # Frobenius-Schur indicator -> rep-type tag for the >=2-d blocks.
 _FS_TAG = {1: "real", -1: "quaternionic", 0: "complex"}

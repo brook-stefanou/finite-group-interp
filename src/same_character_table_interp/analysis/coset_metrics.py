@@ -13,11 +13,11 @@ from typing import Literal, cast
 import numpy as np
 import torch
 
-from finite_group_interp.analysis.cache import forward_with_cache
-from finite_group_interp.groups.group import Element, FiniteGroup
-from finite_group_interp.model import GroupModel
-from finite_group_interp.representations.irreps import extract_irreps
-from finite_group_interp.task import build_group_task
+from same_character_table_interp.analysis.cache import forward_with_cache
+from same_character_table_interp.groups.group import Element, FiniteGroup
+from same_character_table_interp.model import GroupModel
+from same_character_table_interp.representations.irreps import extract_irreps
+from same_character_table_interp.task import build_group_task
 
 Target = Literal["a", "b", "ab"]
 

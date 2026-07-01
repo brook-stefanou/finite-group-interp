@@ -5,15 +5,15 @@ import numpy as np
 import pytest
 import torch
 
-from finite_group_interp.analysis.run_analysis import (
+from same_character_table_interp.analysis.run_analysis import (
     HEADLINE_FIGURES,
     analyze,
     irrep_metrics,
 )
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.task import build_group_task, train_test_split
-from finite_group_interp.training.config import ExperimentConfig, GrokkingConfig
-from finite_group_interp.training.trainer import build_model
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.task import build_group_task, train_test_split
+from same_character_table_interp.training.config import ExperimentConfig, GrokkingConfig
+from same_character_table_interp.training.trainer import build_model
 
 
 def _make_run_dir(tmp_path, metrics_rows=None):

@@ -4,8 +4,8 @@ from typing import cast
 
 import pytest
 
-from finite_group_interp.analysis.compare import evidence_rows
-from finite_group_interp.analysis.evidence import run_all
+from same_character_table_interp.analysis.compare import evidence_rows
+from same_character_table_interp.analysis.evidence import run_all
 
 LOCAL = Path("runs/2026-06-09").is_dir() and Path("runs/2026-06-10").is_dir()
 

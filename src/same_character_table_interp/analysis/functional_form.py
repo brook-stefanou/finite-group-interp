@@ -13,10 +13,10 @@ from typing import cast
 import numpy as np
 import torch
 
-from finite_group_interp.groups.group import FiniteGroup
-from finite_group_interp.model import GroupModel
-from finite_group_interp.representations.irreps import Irrep
-from finite_group_interp.task import build_group_task
+from same_character_table_interp.groups.group import FiniteGroup
+from same_character_table_interp.model import GroupModel
+from same_character_table_interp.representations.irreps import Irrep
+from same_character_table_interp.task import build_group_task
 
 
 def center_over_c(logits: np.ndarray) -> np.ndarray:

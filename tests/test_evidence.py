@@ -3,22 +3,22 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from finite_group_interp.analysis.evidence import (
+from same_character_table_interp.analysis.evidence import (
     Evidence,
     VerdictComponents,
     compute_label,
     evidence_from_run,
     learnability_from_metrics,
 )
-from finite_group_interp.analysis.loading import LoadedCheckpoint, LoadedRun
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.representations.projectors import real_isotypic_blocks
-from finite_group_interp.training.config import (
+from same_character_table_interp.analysis.loading import LoadedCheckpoint, LoadedRun
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.representations.projectors import real_isotypic_blocks
+from same_character_table_interp.training.config import (
     DataConfig,
     ExperimentConfig,
     GrokkingConfig,
 )
-from finite_group_interp.training.trainer import build_model
+from same_character_table_interp.training.trainer import build_model
 
 
 def _components(**kw):

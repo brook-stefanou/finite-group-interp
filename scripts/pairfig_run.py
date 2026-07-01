@@ -23,11 +23,11 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from finite_group_interp.analysis.figures import (  # noqa: E402
+from same_character_table_interp.analysis.figures import (  # noqa: E402
     plot_metric_by_group,
     plot_paired_difference,
 )
-from finite_group_interp.analysis.fve_gap_stats import welch_ttest  # noqa: E402
+from same_character_table_interp.analysis.fve_gap_stats import welch_ttest  # noqa: E402
 
 _LABELS = {"D52": "Dih(104)", "Dic26": "Dic(104)"}
 

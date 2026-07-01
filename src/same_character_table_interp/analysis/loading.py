@@ -14,11 +14,11 @@ from typing import Any
 
 import torch
 
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.groups.group import FiniteGroup
-from finite_group_interp.model import GroupModel
-from finite_group_interp.training.config import GrokkingConfig
-from finite_group_interp.training.trainer import build_model
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.groups.group import FiniteGroup
+from same_character_table_interp.model import GroupModel
+from same_character_table_interp.training.config import GrokkingConfig
+from same_character_table_interp.training.trainer import build_model
 
 
 @dataclass(frozen=True)

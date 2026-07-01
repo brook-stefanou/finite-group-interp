@@ -3,8 +3,8 @@ from typing import Any
 
 from omegaconf import OmegaConf
 
-from finite_group_interp.training.config import GrokkingConfig
-from finite_group_interp.training.trainer import GroupGrokkingTrainer
+from same_character_table_interp.training.config import GrokkingConfig
+from same_character_table_interp.training.trainer import GroupGrokkingTrainer
 
 
 def build_config(overrides: list[str]) -> GrokkingConfig:

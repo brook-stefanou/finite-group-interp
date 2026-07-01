@@ -3,19 +3,19 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from finite_group_interp.analysis.figures import plot_functional_form_fve
-from finite_group_interp.analysis.functional_form import (
+from same_character_table_interp.analysis.figures import plot_functional_form_fve
+from same_character_table_interp.analysis.functional_form import (
     center_over_c,
     fit_logit_tensor,
     functional_form_fit,
     logit_tensor,
     representation_product_features,
 )
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.representations.irreps import extract_irreps
-from finite_group_interp.representations.projectors import real_isotypic_blocks
-from finite_group_interp.training.config import ExperimentConfig, GrokkingConfig
-from finite_group_interp.training.trainer import build_model
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.representations.irreps import extract_irreps
+from same_character_table_interp.representations.projectors import real_isotypic_blocks
+from same_character_table_interp.training.config import ExperimentConfig, GrokkingConfig
+from same_character_table_interp.training.trainer import build_model
 
 C113_RUN = Path("runs/2026-06-04/2026-06-04_050749_grok-C113")
 
@@ -150,9 +150,12 @@ def test_block_keep_maps_to_irrep_rows_via_irrep_indices():
 
 @pytest.mark.skipif(not C113_RUN.exists(), reason="local C113 grokking run not present")
 def test_c113_functional_form_calibration():
-    from finite_group_interp.analysis.loading import load_run
-    from finite_group_interp.analysis.irrep_metrics import isotypic_energy, weight_as_functions
-    from finite_group_interp.representations.projectors import real_isotypic_blocks
+    from same_character_table_interp.analysis.loading import load_run
+    from same_character_table_interp.analysis.irrep_metrics import (
+        isotypic_energy,
+        weight_as_functions,
+    )
+    from same_character_table_interp.representations.projectors import real_isotypic_blocks
 
     run = load_run(C113_RUN)
     group = run.checkpoint.group

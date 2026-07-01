@@ -1,4 +1,4 @@
-from finite_group_interp.groups.catalog import resolve_group
+from same_character_table_interp.groups.catalog import resolve_group
 
 
 def _sizes(subs):

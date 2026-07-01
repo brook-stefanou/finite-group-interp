@@ -4,8 +4,8 @@ all `ensemble.seeds` in one vmapped batch. Requires `ensemble.enabled=true`."""
 import sys
 from pathlib import Path
 
-from finite_group_interp.training.cli import build_config
-from finite_group_interp.training.ensemble import run_ensemble
+from same_character_table_interp.training.cli import build_config
+from same_character_table_interp.training.ensemble import run_ensemble
 
 
 def main(overrides: list[str]) -> list[Path]:

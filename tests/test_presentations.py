@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from finite_group_interp.groups.generators import GroupGenerators
-from finite_group_interp.groups.presentations import build_group, from_presentation
+from same_character_table_interp.groups.generators import GroupGenerators
+from same_character_table_interp.groups.presentations import build_group, from_presentation
 
 
 def _element_orders(group) -> list[int]:

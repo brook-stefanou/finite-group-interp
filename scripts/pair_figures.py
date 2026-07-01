@@ -22,17 +22,17 @@ import argparse
 import statistics
 from pathlib import Path
 
-from finite_group_interp.analysis.coset_metrics import (
+from same_character_table_interp.analysis.coset_metrics import (
     _all_pairs_resid,
     coset_probe_suite,
 )
-from finite_group_interp.analysis.figures import plot_metric_by_group
-from finite_group_interp.analysis.functional_form import functional_form_fit
-from finite_group_interp.analysis.fve_gap_stats import welch_ttest
-from finite_group_interp.analysis.irrep_metrics import isotypic_energy, weight_as_functions
-from finite_group_interp.analysis.loading import load_run
-from finite_group_interp.representations.irreps import extract_irreps
-from finite_group_interp.representations.projectors import real_isotypic_blocks
+from same_character_table_interp.analysis.figures import plot_metric_by_group
+from same_character_table_interp.analysis.functional_form import functional_form_fit
+from same_character_table_interp.analysis.fve_gap_stats import welch_ttest
+from same_character_table_interp.analysis.irrep_metrics import isotypic_energy, weight_as_functions
+from same_character_table_interp.analysis.loading import load_run
+from same_character_table_interp.representations.irreps import extract_irreps
+from same_character_table_interp.representations.projectors import real_isotypic_blocks
 
 # compare_pairs is a sibling script (scripts/ is sys.path[0] when run directly).
 from compare_pairs import _arch, _parse, find_run_dirs, grok_summary  # noqa: E402

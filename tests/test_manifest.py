@@ -1,8 +1,8 @@
 import json
 
-from finite_group_interp.training.config import ExperimentConfig
-from finite_group_interp.training.manifest import compute_config_hash, create_manifest
-from finite_group_interp.training.config import GrokkingConfig, OptimConfig
+from same_character_table_interp.training.config import ExperimentConfig
+from same_character_table_interp.training.manifest import compute_config_hash, create_manifest
+from same_character_table_interp.training.config import GrokkingConfig, OptimConfig
 
 
 def _config(epochs: int = 40000) -> GrokkingConfig:

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from finite_group_interp.groups.group import FiniteGroup
+from same_character_table_interp.groups.group import FiniteGroup
 
 
 def test_no_identity():

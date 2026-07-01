@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from finite_group_interp.groups.generators import GroupGenerators
+from same_character_table_interp.groups.generators import GroupGenerators
 
 
 def test_cyclic_factory():

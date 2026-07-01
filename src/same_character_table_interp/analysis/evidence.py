@@ -11,14 +11,14 @@ from datetime import datetime, timezone
 
 from pydantic import BaseModel
 
-from finite_group_interp.analysis.coset_metrics import CosetResult, coset_analysis
-from finite_group_interp.analysis.loading import LoadedRun, load_run
-from finite_group_interp.analysis.run_analysis import (
+from same_character_table_interp.analysis.coset_metrics import CosetResult, coset_analysis
+from same_character_table_interp.analysis.loading import LoadedRun, load_run
+from same_character_table_interp.analysis.run_analysis import (
     _test_split_tensors,
     irrep_metrics,
 )
-from finite_group_interp.representations.projectors import real_isotypic_blocks
-from finite_group_interp.training.manifest import get_git_commit
+from same_character_table_interp.representations.projectors import real_isotypic_blocks
+from same_character_table_interp.training.manifest import get_git_commit
 
 # Tunable label thresholds (documented heuristics, not learned).
 EPS_COSET = 0.05  # coset excess_over_irrep below this == "adds nothing"

@@ -1,10 +1,10 @@
 import numpy as np
 import pytest
 
-from finite_group_interp.groups.catalog import resolve_group
-from finite_group_interp.representations.characters import compute_character_table
-from finite_group_interp.representations.core import Representation
-from finite_group_interp.representations.irreps import Irrep, _extract_one, extract_irreps
+from same_character_table_interp.groups.catalog import resolve_group
+from same_character_table_interp.representations.characters import compute_character_table
+from same_character_table_interp.representations.core import Representation
+from same_character_table_interp.representations.irreps import Irrep, _extract_one, extract_irreps
 
 
 @pytest.mark.parametrize("name", ["C8", "C12", "S3"])

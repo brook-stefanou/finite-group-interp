@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from finite_group_interp.training.config import BaseConfig, ExperimentConfig
-from finite_group_interp.training.config import (
+from same_character_table_interp.training.config import BaseConfig, ExperimentConfig
+from same_character_table_interp.training.config import (
     DataConfig,
     GrokkingConfig,
     ModelConfig,
@@ -119,7 +119,7 @@ def test_experiment_reproducibility_defaults():
 
 
 def test_ensemble_config_defaults_off():
-    from finite_group_interp.training.config import GrokkingConfig
+    from same_character_table_interp.training.config import GrokkingConfig
 
     cfg = GrokkingConfig(experiment={"name": "x", "seed": 0})
     assert cfg.ensemble.enabled is False
@@ -128,7 +128,7 @@ def test_ensemble_config_defaults_off():
 
 
 def test_ensemble_config_overrides():
-    from finite_group_interp.training.config import GrokkingConfig
+    from same_character_table_interp.training.config import GrokkingConfig
 
     cfg = GrokkingConfig(
         experiment={"name": "x", "seed": 0},
