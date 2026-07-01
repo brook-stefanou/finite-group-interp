@@ -2,7 +2,7 @@
 
 by **[Brook Stefanou](https://brookstefanou.com)**
 
-![CI](https://github.com/brook-stefanou/finite-group-interp/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/brook-stefanou/same-character-table-interp/actions/workflows/ci.yml/badge.svg)
 
 **When a neural network learns a finite group operation, what algorithm is it actually implementing internally?**
 
@@ -13,8 +13,8 @@ A mechanistic interpretability research codebase: reproducible grokking experime
 ## Repository structure
 
 ```
-finite-group-interp/
-├── src/finite_group_interp/
+same-character-table-interp/
+├── src/same_character_table_interp/
 │   ├── groups/             # finite group algebra: construction, presentations, catalog
 │   ├── representations/    # character tables, isotypic projectors
 │   ├── model.py            # 1-layer transformer (from scratch, analysis-friendly)
@@ -59,7 +59,7 @@ The published evidence on both sides is character-level: correlations between mo
 * **Groups of order < 20 do not generalise.** Across S₃, Q₈, A₄, C₈ × weight-decay sweeps (150k epochs), every model memorised the training set quickly and stayed at chance test accuracy. The dataset is the bottleneck (|G|² ≤ 361 examples), not optimisation — so small groups are learning a lookup table, not the group operation, and any "algorithm" read off them would be an artefact. The investigation therefore runs on groups of order ≈ 100–350.
 * **The pipeline reproduces the canonical grokking result.** C₁₁₃ (modular addition) groks cleanly: train fraction 0.3, 30k epochs, 99.77% test accuracy, with dense checkpoints captured through the transition.
 * **C₁₁₃ is calibration, not evidence in the debate.** 113 is prime, so C₁₁₃ has no proper subgroups: the coset hypothesis is vacuous here and cannot make a competing prediction. Replicating the known irrep signature on this run checks the measurement tools against an established answer. Only the same-character-table pairs below can adjudicate between the hypotheses.
-* **The signature replicates, and it is causal.** Three isotypic blocks hold 94% of the embedding's energy (14–23× the random baseline); ablating any one costs 9–17 nats of test loss, while the other 54 blocks sit at a 0.05-nat noise floor; the model restricted to those three blocks keeps 97.4% accuracy. All of this was predicted in the [research log](docs/research-log.md) before the analysis ran. Full write-up: [the project page](https://brook-stefanou.github.io/projects/finite-group-interp/).
+* **The signature replicates, and it is causal.** Three isotypic blocks hold 94% of the embedding's energy (14–23× the random baseline); ablating any one costs 9–17 nats of test loss, while the other 54 blocks sit at a 0.05-nat noise floor; the model restricted to those three blocks keeps 97.4% accuracy. All of this was predicted in the [research log](docs/research-log.md) before the analysis ran. Full write-up: [the project page](https://brookstefanou.com/projects/same-character-table-interp/).
 
 ![Isotypic energy across training: diffuse during memorisation, concentrating into three isotypic blocks exactly at the grokking transition](docs/figures/c113-energy-trajectory.png)
 
@@ -88,7 +88,7 @@ Across 138 seeds (weight decay 1.0; the matrix-level and coset contrasts taken o
 * **Cosets add nothing over irreps.** Coset-membership decodability, scored against the model's own kept irreps (the control both prior papers omit), has mean excess at or below zero on every proper normal subgroup (group means −0.058 Dih and −0.037 Dic across the seven). The naive probe reaches 100%, but so does the irrep control, which is what exposes it as vacuous.
 * **A matrix-level real-vs-quaternionic signature — in the unpredicted direction.** The matrix-vs-trace R² gap *does* separate the groups (Dih 0.063 vs Dic 0.038, Welch p = 0.0019 at n = 105, Dih larger on 70/105), where parameter-counting predicted the real group's gap should be the smaller one. The signature is real and directionally robust but modest, correlational, and currently unexplained.
 
-On this pair, cosets add nothing over irreps, the readout carries an unpredicted representation-type signature, and the cleanest, most seed-stable discriminator is optimisation difficulty. All three findings replicate on a fully-connected baseline (31 seeds per group: Dih groks ~3× faster than Dic, the R²-gap separation is sharper at p = 0.0005, coset excess-over-irrep ≈ 0), so they are not transformer artefacts, and the coset-null holds on the very architecture the coset account was originally read from. Full write-up: [Irreps vs cosets on a same-character-table pair](https://brook-stefanou.github.io/projects/finite-group-interp/).
+On this pair, cosets add nothing over irreps, the readout carries an unpredicted representation-type signature, and the cleanest, most seed-stable discriminator is optimisation difficulty. All three findings replicate on a fully-connected baseline (31 seeds per group: Dih groks ~3× faster than Dic, the R²-gap separation is sharper at p = 0.0005, coset excess-over-irrep ≈ 0), so they are not transformer artefacts, and the coset-null holds on the very architecture the coset account was originally read from. Full write-up: [Irreps vs cosets on a same-character-table pair](https://brookstefanou.com/projects/same-character-table-interp/).
 
 ### Methods
 
@@ -104,7 +104,7 @@ The Chughtai/Stander disagreement is a clean instance of the central epistemic p
 
 | | |
 |---|---|
-| Done | Group + representation-theory library, reproducible training pipeline, and per-run evidence/verdict harness; both experiments written up end to end in [WRITEUP.md](WRITEUP.md), covering the C₁₁₃ calibration and the Dih(104)/Dic(104) pair across 138 seeds with a fully-connected baseline, with the full synthesis on the [project page](https://brook-stefanou.github.io/projects/finite-group-interp/) |
+| Done | Group + representation-theory library, reproducible training pipeline, and per-run evidence/verdict harness; both experiments written up end to end in [WRITEUP.md](WRITEUP.md), covering the C₁₁₃ calibration and the Dih(104)/Dic(104) pair across 138 seeds with a fully-connected baseline, with the full synthesis on the [project page](https://brookstefanou.com/projects/same-character-table-interp/) |
 | Possible extensions | Causal matrix-vs-trace ablation to test whether the representation-type signature is used; dim ≥ 3 dynamics (C₁₃⋊C₉, C₁₃⋊C₈ grok given enough data); the order-125 dim-5 regime is likely width-bound (Heisenberg/F₅ did not grok) and parked |
 
 ---
